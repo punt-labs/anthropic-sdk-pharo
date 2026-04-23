@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   release:
-    name: Publish GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -20,9 +19,15 @@ jobs:
           fetch-depth: 0  # full history required: gh release create reads tag history
 
       - name: Install pdflatex
+        # cm-super provides scalable Type 1 Computer Modern fonts required
+        # by microtype's font-expansion feature.
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            cm-super
 
       - name: Build PDFs (two-pass each)
         run: |
