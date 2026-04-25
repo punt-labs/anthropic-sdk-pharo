@@ -65,14 +65,71 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          # The eval script runs each test individually and captures the
+          # exception object for any failure or error before SUnit's standard
+          # runCase: handler discards it. Per-test detail lines are emitted
+          # first (FAIL/ERROR/SKIP one per line, with up to 3 stack frames
+          # for errors), then the aggregate summary as the LAST line so log
+          # scanners can find it at the tail.
           ./pharo/pharo --headless ./pharo/Pharo.image eval "
-            | result summary passed |
-            result := ClaudeMessagingTestSuite fullSuite run.
+            | suite result details out summary passed |
+            suite := ClaudeMessagingTestSuite fullSuite.
+            result := TestResult new.
+            details := OrderedCollection new.
+            suite tests do: [ :test |
+              [
+                test announce: TestCaseStarted withResult: result.
+                test runCaseManaged.
+                test announce: TestCaseEnded withResult: result.
+                result addPass: test
+              ] on: TestResult failure , TestResult skip , TestResult warning , TestResult error
+                do: [ :ex |
+                  | label kind msg frames ctx limit |
+                  label := test class name , '>>' , test selector.
+                  kind := (ex isKindOf: TestResult failure)
+                    ifTrue: [ 'FAIL' ]
+                    ifFalse: [ (ex isKindOf: TestResult skip)
+                      ifTrue: [ 'SKIP' ]
+                      ifFalse: [ 'ERROR' ] ].
+                  msg := ex messageText.
+                  (msg isNil or: [ msg isEmpty ]) ifTrue: [ msg := ex description ].
+                  msg := msg copyReplaceAll: String cr with: ' '.
+                  msg := msg copyReplaceAll: String lf with: ' '.
+                  frames := OrderedCollection new.
+                  kind = 'ERROR' ifTrue: [
+                    ctx := ex signalerContext.
+                    limit := 3.
+                    [ ctx notNil and: [ limit > 0 ] ] whileTrue: [
+                      frames add: ctx printString.
+                      ctx := ctx sender.
+                      limit := limit - 1 ] ].
+                  details add: { kind. label. ex class name. msg. frames }.
+                  ex sunitAnnounce: test toResult: result ] ].
+            out := Stdio stdout.
+            details do: [ :d |
+              | kind label exClass msg frames line |
+              kind := d at: 1.
+              label := d at: 2.
+              exClass := d at: 3.
+              msg := d at: 4.
+              frames := d at: 5.
+              kind = 'FAIL' ifTrue: [
+                line := 'FAIL ' , label , ' : ' , msg.
+                out nextPutAll: line; lf ].
+              kind = 'ERROR' ifTrue: [
+                line := 'ERROR ' , label , ' : ' , exClass , ' -- ' , msg.
+                out nextPutAll: line; lf.
+                frames do: [ :f |
+                  out nextPutAll: '  at ' , f; lf ] ].
+              kind = 'SKIP' ifTrue: [
+                line := 'SKIP ' , label , ' : ' , msg.
+                out nextPutAll: line; lf ] ].
+            out flush.
             summary := 'MessagingSlowSuiteResult Tests: ', result runCount printString,
               ' Passed: ', result passedCount printString,
               ' Failures: ', result failureCount printString,
               ' Errors: ', result errorCount printString.
-            Stdio stdout nextPutAll: summary; lf; flush.
+            out nextPutAll: summary; lf; flush.
             passed := result failureCount = 0 and: [ result errorCount = 0 ].
             passed ifTrue: [ Smalltalk exitSuccess ] ifFalse: [ Smalltalk exitFailure ]
           " 2>&1 | tee slow-suite.log
