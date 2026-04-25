@@ -30,8 +30,13 @@ LinuxSecretToolBackend >> isAvailable [
 
 { #category : 'operations' }
 LinuxSecretToolBackend >> lookupService: serviceString account: accountString [
+	"Look up a secret. Short-circuits with nil when secret-tool is not installed
+	(common on CI runners) so the shell does not emit 'sh: secret-tool: not found'
+	to stderr on every call. Pipes stderr to /dev/null on the lookup itself so a
+	locked or empty keyring is silent too -- the only contract is the return value."
 	| cmd result |
-	cmd := 'secret-tool lookup service ', (self shellQuote: serviceString), ' account ', (self shellQuote: accountString).
+	self isAvailable ifFalse: [ ^ nil ].
+	cmd := 'secret-tool lookup service ', (self shellQuote: serviceString), ' account ', (self shellQuote: accountString), ' 2>/dev/null'.
 	result := LibC resultOfCommand: cmd.
 	result ifNil: [ ^ nil ].
 	result := result trimRight.
