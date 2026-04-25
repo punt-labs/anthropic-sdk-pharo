@@ -331,7 +331,8 @@ This work, along with the full agent runtime, continues in the separate
 \textbf{Target} & Any in-image extension --- UI components, developer
   tools, integration services, packages \\
 \textbf{Substrate} & Live Pharo image with full introspection \\
-\textbf{Tools} & Postern, Iceberg, agent self-modification primitives \\
+\textbf{Tools} & SystemNavigation, compiler/refactoring tools, Iceberg,
+  agent self-modification primitives \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -347,9 +348,10 @@ use, and refactor and reorganize its own code as patterns emerge.
 
 The point is not any one of these.  The external bootstrap was the
 means; an in-image agent that can extend Pharo arbitrarily is the
-result.  The Messaging SDK shipped here is the first such product.
-Future work in \texttt{claude-agent-sdk-pharo} carries this capability
-forward.
+result.  The Messaging SDK shipped here is the bootstrap artifact
+that proves the external-agent path works; Phase~4 capabilities
+continue in \texttt{claude-agent-sdk-pharo}, where the first
+products built by the in-image agent will land.
 
 % ===================================================================
 \section{Key Design Decisions}
