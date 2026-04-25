@@ -349,7 +349,9 @@ spec:
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification.tex
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification-pharo-notes.tex
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification-pharo-notes.tex
-	@echo "  ok PDFs built: claude-sdk-specification.pdf, claude-sdk-specification-pharo-notes.pdf"
+	cd docs/specifications && pdflatex -interaction=nonstopmode bootstrapping-pharo.tex
+	cd docs/specifications && pdflatex -interaction=nonstopmode bootstrapping-pharo.tex
+	@echo "  ok PDFs built: claude-sdk-specification.pdf, claude-sdk-specification-pharo-notes.pdf, bootstrapping-pharo.pdf"
 
 # ── Clean ──────────────────────────────────────────────
 
