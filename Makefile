@@ -344,7 +344,7 @@ transcript:
 	@$(CURL) -d "Transcript contents" || echo "Error: is the server running? (make start)"
 
 spec:
-	@echo ">> Building claude-sdk-specification PDFs (two-pass)..."
+	@echo ">> Building all spec PDFs (two-pass): claude-sdk-specification, claude-sdk-specification-pharo-notes, bootstrapping-pharo..."
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification.tex
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification.tex
 	cd docs/specifications && pdflatex -interaction=nonstopmode claude-sdk-specification-pharo-notes.tex
