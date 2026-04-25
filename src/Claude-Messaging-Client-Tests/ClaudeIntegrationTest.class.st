@@ -1,5 +1,12 @@
 "
-End-to-end integration tests against the real Claude API. Requires an API key in the system keyring. Tests assert prerequisites and fail clearly when missing; they are excluded from make test. Rotates across current-catalog models (opus47, opus46, sonnet46) with low maxTokens to minimize cost.
+End-to-end integration tests against the real Claude API. Resolves the API key via
+``ClaudeSDKExampleSupport resolveClient`` (OS keyring first, ``ANTHROPIC_API_KEY``
+env var second). When neither is present, ``setUp`` skips cleanly via ``self skip:``
+rather than failing -- a key-less image (CI fork PR, fresh dev box) is not a red.
+
+These tests are excluded from ``make test``; they run via ``ClaudeMessagingTestSuite
+fullSuite`` in the slow-suite workflow. Rotates across current-catalog models
+(opus47, opus46, sonnet46) with low ``maxTokens`` to minimise cost.
 
   ClaudeIntegrationTest buildSuite run
   >>> a TestResult
@@ -14,12 +21,6 @@ Class {
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
-
-{ #category : 'private' }
-ClaudeIntegrationTest >> apiKey [
-	^ [ LibC resultOfCommand: 'secret-tool lookup service pharo anthropic api-key' ]
-		on: Error do: [ :e | nil ]
-]
 
 { #category : 'private' }
 ClaudeIntegrationTest >> modelOpus46 [
@@ -57,13 +58,13 @@ ClaudeIntegrationTest >> newParams: prompt maxTokens: max model: modelId [
 
 { #category : 'running' }
 ClaudeIntegrationTest >> setUp [
-	| key |
+	"Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
+	cleanly when no key is available so a key-less image (CI fork PR, fresh dev
+	box) does not red-fail the suite. This avoids the 'sh: secret-tool: not found'
+	noise that came from probing secret-tool unconditionally on Linux runners."
 	super setUp.
-	key := self apiKey.
-	self assert: key isNotNil description: 'No API key available. Integration tests require a live API key.'.
-	key := key trimBoth.
-	self assert: key isNotEmpty description: 'API key is empty. Integration tests require a live API key.'.
-	client := ClaudeClient apiKey: key.
+	[ client := ClaudeSDKExampleSupport resolveClient ]
+		on: Error do: [ :e | ^ self skip: e messageText ].
 	Transcript
 		nextPutAll: '=== ';
 		nextPutAll: self selector;
