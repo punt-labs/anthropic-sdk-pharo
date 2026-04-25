@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.5.0] - 2026-04-25
+
 ### Added
 
 - **Typed beta-header catalog** (`ClaudeBetaHeader`). Replaces raw string

@@ -18,7 +18,7 @@ Load via Metacello:
 ```smalltalk
 Metacello new
   baseline: 'ClaudeMessaging';
-  repository: 'github://punt-labs/anthropic-sdk-pharo:v1.0.0/src';
+  repository: 'github://punt-labs/anthropic-sdk-pharo:v0.5.0/src';
   load.
 ```
 
@@ -130,6 +130,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).
 
 Full API specification: [claude-sdk-specification.pdf](docs/specifications/claude-sdk-specification.pdf)
 (also available as a GitHub Release asset).
+
+## Roadmap
+
+Version increments and planned API surface: see [ROADMAP.md](docs/ROADMAP.md).
 
 ## License
 
