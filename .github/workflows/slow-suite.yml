@@ -85,26 +85,30 @@ jobs:
               ] on: TestResult failure , TestResult skip , TestResult warning , TestResult error
                 do: [ :ex |
                   | label kind msg frames ctx limit |
-                  label := test class name , '>>' , test selector.
-                  kind := (ex isKindOf: TestResult failure)
-                    ifTrue: [ 'FAIL' ]
-                    ifFalse: [ (ex isKindOf: TestResult skip)
-                      ifTrue: [ 'SKIP' ]
-                      ifFalse: [ 'ERROR' ] ].
-                  msg := ex messageText.
-                  (msg isNil or: [ msg isEmpty ]) ifTrue: [ msg := ex description ].
-                  msg := msg copyReplaceAll: String cr with: ' '.
-                  msg := msg copyReplaceAll: String lf with: ' '.
-                  frames := OrderedCollection new.
-                  kind = 'ERROR' ifTrue: [
-                    ctx := ex signalerContext.
-                    limit := 3.
-                    [ ctx notNil and: [ limit > 0 ] ] whileTrue: [
-                      frames add: ctx printString.
-                      ctx := ctx sender.
-                      limit := limit - 1 ] ].
-                  details add: { kind. label. ex class name. msg. frames }.
-                  ex sunitAnnounce: test toResult: result ] ].
+                  (ex isKindOf: TestResult warning)
+                    ifTrue: [
+                      ex sunitAnnounce: test toResult: result ]
+                    ifFalse: [
+                      label := test class name , '>>' , test selector.
+                      kind := (ex isKindOf: TestResult failure)
+                        ifTrue: [ 'FAIL' ]
+                        ifFalse: [ (ex isKindOf: TestResult skip)
+                          ifTrue: [ 'SKIP' ]
+                          ifFalse: [ 'ERROR' ] ].
+                      msg := ex messageText.
+                      (msg isNil or: [ msg isEmpty ]) ifTrue: [ msg := ex description ].
+                      msg := msg copyReplaceAll: String cr with: ' '.
+                      msg := msg copyReplaceAll: String lf with: ' '.
+                      frames := OrderedCollection new.
+                      kind = 'ERROR' ifTrue: [
+                        ctx := ex signalerContext.
+                        limit := 3.
+                        [ ctx notNil and: [ limit > 0 ] ] whileTrue: [
+                          frames add: ctx printString.
+                          ctx := ctx sender.
+                          limit := limit - 1 ] ].
+                      details add: { kind. label. ex class name. msg. frames }.
+                      ex sunitAnnounce: test toResult: result ] ] ].
             out := Stdio stdout.
             details do: [ :d |
               | kind label exClass msg frames line |
