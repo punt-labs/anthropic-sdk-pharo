@@ -614,14 +614,17 @@ ClaudeClient
   classified: '*Claude-ManagedAgents-Sessions'.
 ```
 
-Selective loading is planned for the v0.7 baseline rename work
-(bead `claude-messaging-pharo-0cd`): when Metacello groups
-`messaging`, `managed-agents`, and `default` are introduced, a
-consumer loading only the `messaging` group will get
-`ClaudeClient` with only Messages methods; loading
-`managed-agents` will add the agent methods on top. Today
-`BaselineOfClaudeMessaging` ships no groups, so consumers
-receive both families together.
+Selective loading is planned for v0.7 (when the first
+`Claude-ManagedAgents-*` package ships): Metacello groups
+`messaging`, `managed-agents`, and `default` will be introduced
+as a baseline extension, so a consumer loading only the
+`messaging` group gets `ClaudeClient` with only Messages
+methods; loading `managed-agents` adds the agent methods on
+top. The bare baseline-class rename
+(`BaselineOfClaudeMessaging` → `BaselineOfClaudeSDK`, bead
+`claude-messaging-pharo-0cd`, tag v0.5.1) ships first and does
+not introduce groups. Today `BaselineOfClaudeMessaging` ships
+no groups, so consumers receive both families together.
 
 ### Other naming conventions
 
