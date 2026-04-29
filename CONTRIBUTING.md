@@ -60,7 +60,7 @@ Code is organized in one layer plus a standalone package:
 | `PharoKeyring` | Cross-platform OS keyring wrapper (standalone) |
 
 Each production package has a matching `-Tests` package.
-`BaselineOfClaudeMessaging` is the Metacello entry point.
+`BaselineOfClaudeSDK` is the Metacello entry point.
 
 ## Code Standards
 

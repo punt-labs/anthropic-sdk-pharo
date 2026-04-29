@@ -108,7 +108,7 @@ and `ClaudeMockServer`.
 | `PharoKeyring` | `PharoKeyring` (facade), `PharoKeyringBackend` (abstract), `LinuxSecretToolBackend`, `MacOSSecurityBackend`, `PharoKeyringError`, `KeyringCommandError` |
 | `PharoKeyring-Tests` | `PharoKeyringTest`, `PharoKeyringIntegrationTest`, `LinuxSecretToolBackendTest`, `MockKeyringBackend` |
 
-Dependency order (per `BaselineOfClaudeMessaging`): PharoKeyring is
+Dependency order (per `BaselineOfClaudeSDK`): PharoKeyring is
 standalone; Types loads before everything else; Errors, Streaming,
 Files, MCP, Skills depend on Types; Client depends on Types, Errors,
 Streaming, Files, MCP, Skills; Tools depends on Types and Client
@@ -623,7 +623,7 @@ methods; loading `managed-agents` adds the agent methods on
 top. The bare baseline-class rename
 (`BaselineOfClaudeMessaging` → `BaselineOfClaudeSDK`, bead
 `claude-messaging-pharo-0cd`, tag v0.5.1) ships first and does
-not introduce groups. Today `BaselineOfClaudeMessaging` ships
+not introduce groups. Today `BaselineOfClaudeSDK` ships
 no groups, so consumers receive both families together.
 
 ### Other naming conventions

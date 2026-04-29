@@ -408,7 +408,7 @@ a message) and conflates two distinct API families.
   resources that compose into the same API surface.
 
 **Consequences:** Consumers loading the SDK via Metacello today
-receive both families together — `BaselineOfClaudeMessaging`
+receive both families together — `BaselineOfClaudeSDK`
 ships no groups and no tiers. Selective loading via Metacello
 groups (`messaging` for the v0.5/v0.6 surface, `managed-agents`
 for the v0.7+ surface, `default` for everything) is planned for
@@ -487,7 +487,7 @@ the host class's package).
 **Rationale:** Single-gateway is the existing pattern and matches
 `anthropic-sdk-python`'s `Anthropic` class, which exposes every
 resource family. Pharo extension methods are first-class:
-`BaselineOfClaudeMessaging` loads `Claude-Messaging-Client`
+`BaselineOfClaudeSDK` loads `Claude-Messaging-Client`
 first, then any `Claude-ManagedAgents-*` package that needs to
 extend `ClaudeClient` loads its extension methods on top. No
 race, no inheritance hack. Selective loading still works — a
