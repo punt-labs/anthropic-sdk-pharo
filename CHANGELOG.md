@@ -7,7 +7,26 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **BREAKING (consumer URL)**: Metacello baseline renamed from
+  `ClaudeMessaging` to `ClaudeSDK`. Update consumer load expressions:
+
+  ```smalltalk
+  Metacello new
+    baseline: 'ClaudeSDK';   "was: baseline: 'ClaudeMessaging'"
+    repository: 'github://punt-labs/anthropic-sdk-pharo:v0.5.1/src';
+    load.
+  ```
+
+  The repository URL stays at `github://punt-labs/anthropic-sdk-pharo`.
+  v0.5.0 is the last release under the old name; v0.5.1 ships under the
+  new name. The old name remains available via the `v0.5.0` git tag for
+  backward compatibility. The on-disk class moves from
+  `src/BaselineOfClaudeMessaging/` to `src/BaselineOfClaudeSDK/`.
+  Rationale: the baseline now reads as the SDK (dual scope —
+  Messaging + ManagedAgents), not just one of its families. See
+  ADR-40/41/42 in `DESIGN.md`.
 
 ## [0.5.0] - 2026-04-25
 

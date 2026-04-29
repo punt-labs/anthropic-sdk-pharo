@@ -26,7 +26,7 @@ a Tonel package in this tree.
 
 For the canonical, per-package class inventory and dependency
 contract, see the root `CLAUDE.md` Packages section and
-`BaselineOfClaudeMessaging`. The summary below names the packages
+`BaselineOfClaudeSDK`. The summary below names the packages
 and their purpose; the root file owns the detail.
 
 ### Layer — Claude Messaging SDK (API client)
@@ -47,7 +47,7 @@ and their purpose; the root file owns the detail.
 
 | Package | Purpose |
 |---------|---------|
-| `BaselineOfClaudeMessaging` | Metacello baseline that loads all packages in dependency order |
+| `BaselineOfClaudeSDK` | Metacello baseline that loads all packages in dependency order |
 
 ### Standalone
 

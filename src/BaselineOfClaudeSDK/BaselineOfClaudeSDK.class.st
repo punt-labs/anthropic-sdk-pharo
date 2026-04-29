@@ -6,14 +6,14 @@ No groups, no tiers — one baseline:load loads everything.
 ### Loading from GitHub
 
   Metacello new
-    baseline: 'ClaudeMessaging';
+    baseline: 'ClaudeSDK';
     repository: 'github://punt-labs/anthropic-sdk-pharo:main/src';
     load.
 
 ### Pinning to a release tag
 
   Metacello new
-    baseline: 'ClaudeMessaging';
+    baseline: 'ClaudeSDK';
     repository: 'github://punt-labs/anthropic-sdk-pharo:v1.0.0/src';
     load.
 
@@ -24,14 +24,14 @@ No groups, no tiers — one baseline:load loads everything.
 
 "
 Class {
-	#name : 'BaselineOfClaudeMessaging',
+	#name : 'BaselineOfClaudeSDK',
 	#superclass : 'BaselineOf',
-	#category : 'BaselineOfClaudeMessaging',
-	#package : 'BaselineOfClaudeMessaging'
+	#category : 'BaselineOfClaudeSDK',
+	#package : 'BaselineOfClaudeSDK'
 }
 
 { #category : 'baselines' }
-BaselineOfClaudeMessaging class >> baseline: spec [
+BaselineOfClaudeSDK class >> baseline: spec [
 	<baseline>
 	spec
 		for: #common
@@ -101,6 +101,6 @@ BaselineOfClaudeMessaging class >> baseline: spec [
 ]
 
 { #category : 'accessing' }
-BaselineOfClaudeMessaging class >> projectClass [
+BaselineOfClaudeSDK class >> projectClass [
 	^ MetacelloCypressBaselineProject
 ]

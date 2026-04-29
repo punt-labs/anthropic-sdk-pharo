@@ -326,7 +326,7 @@ check-packages:
 		loaded := ((Smalltalk globals allClasses select: [ :c | \
 			(c package name beginsWith: 'Claude-Messaging-') or: [ \
 				(c package name beginsWith: 'PharoKeyring') or: [ \
-					c package name = 'BaselineOfClaudeMessaging' ] ] ]) \
+					c package name = 'BaselineOfClaudeSDK' ] ] ]) \
 			collect: [ :c | c package name ]) asSet. \
 		missing := expected difference: loaded. \
 		missing isEmpty \
