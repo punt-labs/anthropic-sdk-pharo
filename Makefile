@@ -197,13 +197,17 @@ lint:
 			findings ifEmpty: [ results add: cls name, ': clean' ] \
 				ifNotEmpty: [ results addAll: findings ] ]. \
 		results ifEmpty: [ 'No SDK classes found' ] \
-			ifNotEmpty: [ String cr join: results ]") \
-		&& LINT_OUTPUT="$${RESULT#\'}" \
-		&& LINT_OUTPUT="$$(echo "$$LINT_OUTPUT" | sed "s/'$$//")" \
-		&& echo "$$LINT_OUTPUT" \
-		&& DIRTY=$$(echo "$$LINT_OUTPUT" | grep -v ': clean$$' | grep -v '^$$' || true) \
-		&& if [ -n "$$DIRTY" ]; then echo "  FAIL lint findings present (see above)"; exit 1; fi \
-		&& echo "  ok lint clean"
+			ifNotEmpty: [ String cr join: results ]"); \
+	if [ -z "$$RESULT" ]; then \
+		echo "Error: is the server running? (make start)"; \
+		exit 1; \
+	fi; \
+	LINT_OUTPUT="$${RESULT#\'}"; \
+	LINT_OUTPUT="$$(echo "$$LINT_OUTPUT" | sed "s/'$$//")"; \
+	echo "$$LINT_OUTPUT"; \
+	DIRTY=$$(echo "$$LINT_OUTPUT" | grep -v ': clean$$' | grep -v '^$$' || true); \
+	if [ -n "$$DIRTY" ]; then echo "  FAIL lint findings present (see above)"; exit 1; fi; \
+	echo "  ok lint clean"
 
 drift:
 	@echo ">> Checking image-vs-disk method drift..."
