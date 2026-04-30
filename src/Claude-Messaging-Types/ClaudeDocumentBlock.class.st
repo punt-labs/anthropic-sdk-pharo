@@ -147,17 +147,29 @@ ClaudeDocumentBlock >> citations: aDictionary [
 { #category : 'accessing' }
 ClaudeDocumentBlock >> citationsEnabled [
 	"Boolean predicate reading the citations slot. Returns true iff the slot is
-	a Dictionary AND its #enabled value is true. Returns false in all other cases:
-	nil slot, non-Dictionary slot (String/Array/etc. — the citations: setter lets
-	arbitrary values through as an escape hatch, and STON/JSON restore can land
-	one here too), { #enabled -> false }, missing #enabled key, or raw Dictionary
-	with any other shape. Callers should prefer this predicate over poking at the
-	raw Dictionary. The slot is set via #enableCitations / #disableCitations
-	which always write Boolean values; the raw #citations: setter is an escape
-	hatch where non-Boolean values would surface truthfully."
+	a Dictionary AND its #enabled value is the Boolean true. Returns false in
+	every other case: nil slot, non-Dictionary slot (String/Array/etc. — the
+	citations: setter lets arbitrary values through as an escape hatch, and
+	STON/JSON restore can land one here too), { #enabled -> false }, missing
+	#enabled key, or a non-Boolean value at #enabled (e.g. the String 'true'
+	from a non-normalized JSON payload). The polymorphic dispatch through
+	ifTrue:ifFalse: enforces the Boolean contract — Boolean responds with the
+	matching branch, every other class raises a NonBooleanReceiver, which we
+	catch and answer false. This stays clear of Renraku's 'Unnecessary = true'
+	rule (which fires on direct = / == / ~= / ~~ against true or false), the
+	bad-message rule (which forbids isKindOf:), and the True/False class-name
+	rule (which forbids referencing True or False directly). Callers should
+	prefer this predicate over poking at the raw Dictionary. The slot is set
+	via #enableCitations / #disableCitations which always write Boolean values;
+	the raw #citations: setter is an escape hatch where non-Boolean values
+	would surface truthfully."
+	| value |
 	citations ifNil: [ ^ false ].
 	citations isDictionary ifFalse: [ ^ false ].
-	^ citations at: #enabled ifAbsent: [ false ]
+	value := citations at: #enabled ifAbsent: [ ^ false ].
+	^ [ value ifTrue: [ true ] ifFalse: [ false ] ]
+		on: NonBooleanReceiver
+		do: [ :ex | false ]
 ]
 
 { #category : 'accessing' }
