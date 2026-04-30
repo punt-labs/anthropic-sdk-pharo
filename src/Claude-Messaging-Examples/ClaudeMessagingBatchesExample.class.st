@@ -58,7 +58,7 @@ ClaudeMessagingBatchesExample class >> logCanceledOrExpired: anEntry [
 	"Log a canceled or expired batch entry to the Transcript with the outcome type."
 	| label |
 	label := anEntry isCanceled ifTrue: [ 'CANCELED' ] ifFalse: [ 'EXPIRED' ].
-	Transcript show: 'r-' , anEntry customId , ' ' , label; cr
+	Transcript show: anEntry customId , ' ' , label; cr
 ]
 
 { #category : 'private' }
@@ -67,7 +67,7 @@ ClaudeMessagingBatchesExample class >> logErrored: anEntry [
 	| err message |
 	err := anEntry result error.
 	message := err ifNil: [ '<no error payload>' ] ifNotNil: [ err message ifNil: [ '<no message>' ] ].
-	Transcript show: 'r-' , anEntry customId , ' ERROR: ' , message; cr
+	Transcript show: anEntry customId , ' ERROR: ' , message; cr
 ]
 
 { #category : 'private' }
@@ -80,7 +80,7 @@ ClaudeMessagingBatchesExample class >> logSucceeded: anEntry [
 	snippet := text size > 60
 		ifTrue: [ (text first: 60) , '...' ]
 		ifFalse: [ text ].
-	Transcript show: 'r-' , anEntry customId , ' OK: ' , snippet; cr
+	Transcript show: anEntry customId , ' OK: ' , snippet; cr
 ]
 
 { #category : 'examples' }
