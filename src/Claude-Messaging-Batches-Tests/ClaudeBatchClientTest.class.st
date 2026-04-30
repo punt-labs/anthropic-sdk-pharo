@@ -1,8 +1,8 @@
 "
-End-to-end tests for the Batches API client extension methods using ClaudeMockServer. Covers createBatch:, getBatch:, listBatches, listBatches:, cancelBatch:, deleteBatch:, streamBatchResults:do:. Pins the message-batches-2024-09-24 beta header on every wire call and the ClaudeBatchNotEndedError guard when streamBatchResults:do: is called before the batch reaches ended.
+End-to-end tests for the Batches API client extension methods using ClaudeMockServer. Covers createBatch:, getBatch:, listBatches, listBatches:, cancelBatch:, deleteBatch:, streamBatchResults:do:. Pins the message-batches-2024-09-24 beta header on every wire call and the ClaudeBatchNotEndedError guard when streamBatchResults:do: is called before the batch reaches ended. Includes regression tests for the Bugbot MEDIUM finding (no duplication when executeWithRetry: retries the results GET) and the structural property (no callback fires before the entire response is parsed).
 
   ClaudeBatchClientTest buildSuite run
-  >>> 9 run, 9 passes
+  >>> 12 run, 12 passes
 
 "
 Class {
@@ -46,13 +46,12 @@ ClaudeBatchClientTest >> sampleEndedBatchJson [
 
 { #category : 'running' }
 ClaudeBatchClientTest >> setUp [
-	"Allocate a fresh port per test from the 18500-18599 range. Wide enough that
-	 same-port reuse is unlikely within a single test run, narrow enough to stay
-	 inside the standard testing port window. Combined with the 50ms post-stop
-	 delay in tearDown, ensures the OS has released the previous port before the
-	 next test grabs one."
-	port := 18500 + 100 atRandom.
-	server := ClaudeMockServer startOn: port.
+	"Use OS-assigned port 0 -- ZnServer picks a free port and we read it back
+	 via the mock server's port accessor. Avoids hardcoded port ranges, port
+	 collisions across parallel test runs, and same-port reuse races. The OS
+	 only hands back a port that's actually free at start time."
+	server := ClaudeMockServer startOn: 0.
+	port := server port.
 	client := ClaudeClient apiKey: 'test-key'.
 	client baseUrl: 'http://localhost:' , port printString.
 	client maxRetries: 0
@@ -60,11 +59,9 @@ ClaudeBatchClientTest >> setUp [
 
 { #category : 'running' }
 ClaudeBatchClientTest >> tearDown [
-	"Stop the mock server. Sleep briefly to ensure the port is released by the OS
-	 before the next test grabs a different one — defensive against same-port reuse
-	 within a single test-class run."
-	server ifNotNil: [ server stop. server := nil ].
-	(Delay forMilliseconds: 50) wait
+	"Stop the mock server. The OS-assigned port from setUp is released
+	 immediately on stop; no manual delay needed."
+	server ifNotNil: [ server stop. server := nil ]
 ]
 
 { #category : 'tests' }
@@ -176,6 +173,62 @@ ClaudeBatchClientTest >> testStreamBatchResultsHandlesEmptyStream [
 	server respondTo: 'v1/messages/batches/batch-abc/results' with: jsonl.
 	results := client streamBatchResults: 'batch-abc' do: [ :entry | self fail: 'block should not be called' ].
 	self assert: results size equals: 0
+]
+
+{ #category : 'tests' }
+ClaudeBatchClientTest >> testStreamBatchResultsNoCallbackBeforeFullParse [
+	"Structural guarantee: aBlock and results accumulation happen ONLY after
+	 the entire response body has been parsed successfully. If any line fails
+	 to parse, no entries are yielded and no partial collection is returned.
+	 This is the property that prevents duplication on executeWithRetry: --
+	 partial work from a failed attempt is structurally impossible."
+	| jsonl line1 line2 badLine yielded |
+	server respondTo: 'v1/messages/batches/batch-abc' with: self sampleEndedBatchJson.
+	line1 := STONJSON toString: (Dictionary newFromPairs: {
+		'custom_id'. 'r-1'.
+		'result'. (Dictionary newFromPairs: { 'type'. 'canceled' }) }).
+	line2 := STONJSON toString: (Dictionary newFromPairs: {
+		'custom_id'. 'r-2'.
+		'result'. (Dictionary newFromPairs: { 'type'. 'canceled' }) }).
+	badLine := '{this is not valid json'.
+	jsonl := line1 , String lf , line2 , String lf , badLine , String lf.
+	server respondTo: 'v1/messages/batches/batch-abc/results' with: jsonl.
+	yielded := OrderedCollection new.
+	[ client streamBatchResults: 'batch-abc' do: [ :entry | yielded add: entry ] ]
+		on: Error do: [ :e | "expected -- bad JSON in last line" ].
+	self assert: yielded size equals: 0
+]
+
+{ #category : 'tests' }
+ClaudeBatchClientTest >> testStreamBatchResultsNoDuplicationOnRetry [
+	"Regression for the Bugbot MEDIUM finding: when the results GET retries
+	 (e.g., a transient 503), entries from the failed attempt must NOT appear
+	 in the returned collection and aBlock must NOT be invoked twice per
+	 entry. The fix parses the body fully before yielding to aBlock or
+	 accumulating, so a partial parse on a failed attempt is discarded."
+	| jsonl line1 line2 line3 successResp errorResp results yielded |
+	server respondTo: 'v1/messages/batches/batch-abc' with: self sampleEndedBatchJson.
+	line1 := STONJSON toString: (Dictionary newFromPairs: {
+		'custom_id'. 'r-1'.
+		'result'. (Dictionary newFromPairs: { 'type'. 'canceled' }) }).
+	line2 := STONJSON toString: (Dictionary newFromPairs: {
+		'custom_id'. 'r-2'.
+		'result'. (Dictionary newFromPairs: { 'type'. 'canceled' }) }).
+	line3 := STONJSON toString: (Dictionary newFromPairs: {
+		'custom_id'. 'r-3'.
+		'result'. (Dictionary newFromPairs: { 'type'. 'canceled' }) }).
+	jsonl := line1 , String lf , line2 , String lf , line3 , String lf.
+	errorResp := server errorResponse: 503 message: 'overloaded'.
+	successResp := ZnResponse ok: (ZnEntity with: jsonl type: (ZnMimeType main: 'application' sub: 'x-jsonl')).
+	server
+		respondTo: 'v1/messages/batches/batch-abc/results'
+		withSequence: (OrderedCollection with: errorResp with: successResp).
+	client maxRetries: 1.
+	yielded := OrderedCollection new.
+	results := client streamBatchResults: 'batch-abc' do: [ :entry | yielded add: entry ].
+	self assert: results size equals: 3.
+	self assert: yielded size equals: 3.
+	self assert: (results allSatisfy: [ :r | r isCanceled ])
 ]
 
 { #category : 'tests' }
