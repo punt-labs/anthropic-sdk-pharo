@@ -45,8 +45,6 @@ to [Semantic Versioning](https://semver.org/).
   synchronous-Messages validator and rejected legitimate batch
   payloads with a 400.
 
-### Changed
-
 - **BREAKING (consumer URL)**: Metacello baseline renamed from
   `ClaudeMessaging` to `ClaudeSDK`. Update consumer load expressions:
 
