@@ -15,6 +15,7 @@
 
 directory:
   labels:
+    anthropic-sdk-pharo: repo:aspharo
     claude-messaging-pharo: repo:aspharo
 
 backup:
