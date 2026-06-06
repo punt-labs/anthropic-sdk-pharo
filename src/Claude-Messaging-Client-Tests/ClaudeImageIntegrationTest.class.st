@@ -29,12 +29,13 @@ supports URL-source images without a beta header. The server fetches
 the image from the URL. See `ClaudeMessagingImageExample exampleImageUrl`
 for the URL choice rationale.
 
-**External-infrastructure dependency.** Three components can turn
-this test red without any change on our side: an Anthropic API
-outage, a regression in image handling, or the image URL being
-retired by Wikimedia. Triage should distinguish upstream infra from
-a local regression. If the URL 404s, that is a follow-up bead to
-update `exampleImageUrl`, NOT a test bug.
+**External-infrastructure dependency.** The image is now self-hosted
+on punt-labs.com, so the third-party dependency is gone. A red here
+means one of: an Anthropic API outage, a genuine SDK image-handling
+regression, or an outage of our own asset host — not a stranger's
+fetcher policy. Triage should distinguish upstream infra from a local
+regression. If the URL 404s, that is a follow-up bead to update
+`exampleImageUrl`, NOT a test bug.
 
 **No cleanup.** The request is stateless on our side — no server
 resources are created, no named entries persist. Absence of an
@@ -42,6 +43,7 @@ resources are created, no named entries persist. Absence of an
 
   ClaudeImageIntegrationTest buildSuite
   >>> a TestSuite
+
 
 "
 Class {
