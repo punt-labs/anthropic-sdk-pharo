@@ -15,14 +15,13 @@ the server-computed proof that the image reached the model's context.
 (Hard numbers live in the test-artifact result log, not in docstrings,
 so comments don't drift when token pricing or compression changes.)
 
-**URL choice.** The default is a Wikimedia Commons PNG (""PNG
-transparency demonstration"", the well-known translucent-dice image,
-stable since 2008). Wikimedia Commons canonical URLs (the non-thumb
-endpoint) are served without thumbnail-renderer rate limits. The
-thumbnail endpoint is rate-limited against automated fetchers —
-Anthropic's server-side fetcher receives HTTP 429 on the thumb URL
-but 200 on the canonical URL. We use the canonical URL. See
-`exampleImageUrl` for specifics.
+**URL choice.** The default is a PNG hosted on our own domain
+(punt-labs.com). Hosting the asset ourselves removes the third-party
+image-host dependency: the test no longer relies on a stranger's asset
+availability or fetcher policy. (It still calls Anthropic's API, as any
+live integration test must.) URL-source images are natively supported
+by the Messages API with no beta header. See `exampleImageUrl` for
+specifics.
 
 **Prompt design.** The question asks for a single-sentence description
 so the response is cheap and the stopReason is predictable (#end_turn
@@ -70,21 +69,16 @@ ClaudeMessagingImageExample class >> buildRequest [
 
 { #category : 'building' }
 ClaudeMessagingImageExample class >> exampleImageUrl [
-	"Return the default image URL used by this example. Wikimedia Commons
-	 hosts the 'PNG transparency demonstration' image (full-size
-	 ~224 KB, recognizable translucent-dice scene, stable since 2008).
-	 URL-source images are natively supported by the Messages API with
-	 no beta header required. The server fetches the image and the model
+	"Return the default image URL used by this example. The image is a PNG
+	 hosted on our own domain (punt-labs.com), so this test no longer relies
+	 on a third-party image-host's asset availability or fetcher policy.
+	 (It still calls Anthropic's API, as any live integration test must.)
+	 URL-source images are natively supported by the Messages API with no
+	 beta header required; the server fetches the image and the model
 	 downsamples it as needed.
 
-	 NOTE: The thumbnail endpoint (upload.wikimedia.org/.../thumb/...) is
-	 rate-limited against automated fetchers (observed HTTP 429 from
-	 Anthropic's fetcher). The canonical (non-thumb) URL used here is
-	 served directly without thumbnail-renderer rate limits.
-
-	 If the URL breaks, that is a follow-up bead to update the URL, not
-	 a test bug."
-	^ 'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png'
+	 If the asset ever moves, update this method."
+	^ 'https://www.punt-labs.com/og-default.png'
 ]
 
 { #category : 'private' }
