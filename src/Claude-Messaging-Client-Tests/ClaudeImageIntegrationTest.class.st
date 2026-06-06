@@ -30,12 +30,14 @@ the image from the URL. See `ClaudeMessagingImageExample exampleImageUrl`
 for the URL choice rationale.
 
 **External-infrastructure dependency.** The image is now self-hosted
-on punt-labs.com, so the third-party dependency is gone. A red here
-means one of: an Anthropic API outage, a genuine SDK image-handling
-regression, or an outage of our own asset host — not a stranger's
-fetcher policy. Triage should distinguish upstream infra from a local
-regression. If the URL 404s, that is a follow-up bead to update
-`exampleImageUrl`, NOT a test bug.
+on punt-labs.com, which removes the third-party image-host dependency:
+the test no longer relies on a stranger's asset availability or fetcher
+policy. (It still calls Anthropic's API, as any live integration test
+must.) A red here means one of: an Anthropic API outage, a genuine SDK
+image-handling regression, or an outage of our own asset host. Triage
+should distinguish upstream infra from a local regression. If the URL
+404s, that is a follow-up bead to update `exampleImageUrl`, NOT a test
+bug.
 
 **No cleanup.** The request is stateless on our side — no server
 resources are created, no named entries persist. Absence of an
@@ -43,7 +45,6 @@ resources are created, no named entries persist. Absence of an
 
   ClaudeImageIntegrationTest buildSuite
   >>> a TestSuite
-
 
 "
 Class {

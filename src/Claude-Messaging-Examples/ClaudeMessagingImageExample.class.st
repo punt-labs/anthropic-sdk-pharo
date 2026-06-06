@@ -17,10 +17,11 @@ so comments don't drift when token pricing or compression changes.)
 
 **URL choice.** The default is a PNG hosted on our own domain
 (punt-labs.com). Hosting the asset ourselves removes the third-party
-dependency: the test depends only on infrastructure we operate, not
-on a stranger's availability or fetcher policy. URL-source images are
-natively supported by the Messages API with no beta header. See
-`exampleImageUrl` for specifics.
+image-host dependency: the test no longer relies on a stranger's asset
+availability or fetcher policy. (It still calls Anthropic's API, as any
+live integration test must.) URL-source images are natively supported
+by the Messages API with no beta header. See `exampleImageUrl` for
+specifics.
 
 **Prompt design.** The question asks for a single-sentence description
 so the response is cheap and the stopReason is predictable (#end_turn
@@ -39,7 +40,6 @@ processed the image, not that it described it correctly.
 
   ClaudeMessagingImageExample buildRequest messages first content size
   >>> 2
-
 
 "
 Class {
@@ -70,11 +70,12 @@ ClaudeMessagingImageExample class >> buildRequest [
 { #category : 'building' }
 ClaudeMessagingImageExample class >> exampleImageUrl [
 	"Return the default image URL used by this example. The image is a PNG
-	 hosted on our own domain (punt-labs.com), so this test depends only on
-	 infrastructure we operate rather than a third-party asset we do not
-	 control. URL-source images are natively supported by the Messages API
-	 with no beta header required; the server fetches the image and the
-	 model downsamples it as needed.
+	 hosted on our own domain (punt-labs.com), so this test no longer relies
+	 on a third-party image-host's asset availability or fetcher policy.
+	 (It still calls Anthropic's API, as any live integration test must.)
+	 URL-source images are natively supported by the Messages API with no
+	 beta header required; the server fetches the image and the model
+	 downsamples it as needed.
 
 	 If the asset ever moves, update this method."
 	^ 'https://www.punt-labs.com/og-default.png'
