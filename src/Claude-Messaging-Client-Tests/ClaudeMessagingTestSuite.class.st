@@ -38,6 +38,16 @@ ClaudeMessagingTestSuite class >> packageNames [
 	)
 ]
 
+{ #category : 'running' }
+ClaudeMessagingTestSuite class >> runFullWithErrorLogging [
+	"Run the full Messaging suite (including integration) under a result that logs
+	uncaught test errors as secret-safe stacktraces to the Transcript. Answer the result."
+	| result |
+	result := ClaudeLoggingTestResult new.
+	self fullSuite run: result.
+	^ result
+]
+
 { #category : 'accessing' }
 ClaudeMessagingTestSuite class >> suiteLabel [
 	^ 'Claude Messaging SDK Tests'
