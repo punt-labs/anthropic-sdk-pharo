@@ -127,10 +127,14 @@ ClaudeAbstractTestSuite class >> suiteLabel [
 	^ 'Claude Tests'
 ]
 
-{ #category : 'building' }
+{ #category : 'accessing' }
 ClaudeAbstractTestSuite class >> testClasses [
-	"Answer all TestCase subclasses from this suite factory's packages."
+	"Answer all concrete TestCase subclasses from this suite factory''s
+	 packages. Abstract test classes (isAbstract answers true) are fixtures
+	 driven explicitly elsewhere and must not be auto-collected."
 	^ self packageNames flatCollect: [ :pn |
 		Smalltalk globals allClasses select: [ :c |
-			(c includesBehavior: TestCase) and: [ c package name = pn ] ] ]
+			(c includesBehavior: TestCase)
+				and: [ c isAbstract not
+				and: [ c package name = pn ] ] ] ]
 ]

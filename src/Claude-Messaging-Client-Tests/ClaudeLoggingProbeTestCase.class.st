@@ -12,6 +12,15 @@ Class {
 	#package : 'Claude-Messaging-Client-Tests'
 }
 
+{ #category : 'testing' }
+ClaudeLoggingProbeTestCase class >> isAbstract [
+	"This fixture is driven explicitly by ClaudeLoggingTestResultTest via
+	 #selector:; its deliberately failing/raising test methods must never be
+	 auto-collected into the package test suite. Answering true is SUnit''s
+	 signal that no TestCase instances should be built from this class."
+	^ true
+]
+
 { #category : 'tests' }
 ClaudeLoggingProbeTestCase >> failWithApiKey: aKey [ ^ Error signal: 'boom (key length: ' , aKey size printString , ')'
 ]
