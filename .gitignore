@@ -22,3 +22,10 @@ PharoDebug.log
 .DS_Store
 
 .biff.local
+
+# Claude Code scheduler runtime lock (machine-local, transient)
+.claude/scheduled_tasks.lock
+
+# Stray beads embedded-dolt dir created in the wrong place;
+# the real beads config is the top-level .beads/ (server mode)
+aspharo/
