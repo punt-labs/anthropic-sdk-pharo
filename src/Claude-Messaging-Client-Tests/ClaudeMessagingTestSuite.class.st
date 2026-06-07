@@ -17,9 +17,19 @@ Use this factory when you only need the Messaging SDK tests. For the combined cr
 Class {
 	#name : 'ClaudeMessagingTestSuite',
 	#superclass : 'ClaudeAbstractTestSuite',
+	#classInstVars : [
+		'lastErrorReports'
+	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
+
+{ #category : 'accessing' }
+ClaudeMessagingTestSuite class >> lastErrorReports [
+	"The errorReports from the most recent runFullWithErrorLogging, stashed class-side so they
+	survive the eval that produced them. nil until the first such run."
+	^ lastErrorReports
+]
 
 { #category : 'accessing' }
 ClaudeMessagingTestSuite class >> packageNames [
@@ -40,11 +50,19 @@ ClaudeMessagingTestSuite class >> packageNames [
 
 { #category : 'running' }
 ClaudeMessagingTestSuite class >> runFullWithErrorLogging [
-	"Run the full Messaging suite (including integration) under a result that logs
-	uncaught test errors as secret-safe stacktraces to the Transcript. Answer the result."
+	"Run the full Messaging suite (including integration) under a result that logs uncaught
+	test errors as secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file,
+	the result errorReports collection, and the Transcript. The durable file is truncated and
+	given a header line first, so it reflects exactly this run. The reports are stashed class-side
+	in lastErrorReports so they survive the eval. Answer the result."
 	| result |
 	result := ClaudeLoggingTestResult new.
+	result errorLogFile ensureDelete.
+	result errorLogFile ensureCreateFile.
+	result errorLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test errors (run start) ==='; nextPut: Character lf ].
 	self fullSuite run: result.
+	lastErrorReports := result errorReports.
 	^ result
 ]
 

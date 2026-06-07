@@ -8,6 +8,9 @@ Unit tests for ClaudeLoggingTestResult. Each test runs a throwaway probe (Claude
 Class {
 	#name : 'ClaudeLoggingTestResultTest',
 	#superclass : 'TestCase',
+	#instVars : [
+		'tempLogFile'
+	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
@@ -19,6 +22,38 @@ ClaudeLoggingTestResultTest >> runProbe: aSelector into: aStream [
 	result := ClaudeLoggingTestResult new logStream: aStream; yourself.
 	result runCase: (ClaudeLoggingProbeTestCase selector: aSelector).
 	^ result
+]
+
+{ #category : 'running' }
+ClaudeLoggingTestResultTest >> runProbe: aSelector into: aStream withDurableFile: aFileReference [
+	"Run the named probe under a logging result that writes the Transcript tail to aStream and
+	the durable block to aFileReference. Writes a header line to the file first, mirroring the
+	runFullWithErrorLogging lifecycle. Answer the result."
+	| result |
+	aFileReference ensureDelete.
+	aFileReference ensureCreateFile.
+	aFileReference writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test errors (run start) ==='; nextPut: Character lf ].
+	result := ClaudeLoggingTestResult new
+		logStream: aStream;
+		errorLogFile: aFileReference;
+		yourself.
+	result runCase: (ClaudeLoggingProbeTestCase selector: aSelector).
+	^ result
+]
+
+{ #category : 'running' }
+ClaudeLoggingTestResultTest >> tearDown [
+	tempLogFile ifNotNil: [ :f | f ensureDelete ].
+	super tearDown
+]
+
+{ #category : 'running' }
+ClaudeLoggingTestResultTest >> tempLogFile [
+	"A unique throwaway log file under .tmp, lazily created per test and removed in tearDown."
+	^ tempLogFile ifNil: [
+		tempLogFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+			/ ('test-errors-probe-' , UUID new asString36 , '.log') ]
 ]
 
 { #category : 'tests' }
@@ -40,6 +75,38 @@ ClaudeLoggingTestResultTest >> testAssertionFailureIsNotLogged [
 	self assert: result failureCount equals: 1.
 	self assert: result errorCount equals: 0.
 	self deny: (stream contents includesSubstring: '[Claude test ERROR]')
+]
+
+{ #category : 'tests' }
+ClaudeLoggingTestResultTest >> testDurableFileContainsErrorBlock [
+	"The durable file must carry the full error block independent of the Transcript, proving the
+	trace survives on disk after the run: the header, the ERROR marker, and a method frame."
+	| stream fileContents |
+	stream := WriteStream on: String new.
+	self runProbe: #testRaisesError into: stream withDurableFile: self tempLogFile.
+	fileContents := self tempLogFile contents.
+	self assert: (fileContents includesSubstring: '=== Claude test errors (run start) ===').
+	self assert: (fileContents includesSubstring: '[Claude test ERROR]').
+	self assert: (fileContents includesSubstring: 'ClaudeLoggingProbeTestCase>>raiseWithSecret')
+]
+
+{ #category : 'tests' }
+ClaudeLoggingTestResultTest >> testErrorReportsEmptyOnPass [
+	"A passing test leaves the retained reports collection empty."
+	| stream result |
+	stream := WriteStream on: String new.
+	result := self runProbe: #testPasses into: stream withDurableFile: self tempLogFile.
+	self assert: result errorReports isEmpty
+]
+
+{ #category : 'tests' }
+ClaudeLoggingTestResultTest >> testErrorReportsRetainedOnError [
+	"An erroring test leaves exactly one retained report block on the result."
+	| stream result |
+	stream := WriteStream on: String new.
+	result := self runProbe: #testRaisesError into: stream withDurableFile: self tempLogFile.
+	self assert: result errorReports size equals: 1.
+	self assert: (result errorReports first includesSubstring: '[Claude test ERROR]')
 ]
 
 { #category : 'tests' }
@@ -73,6 +140,17 @@ ClaudeLoggingTestResultTest >> testRunnerReturnsLoggingResultType [
 	source := (ClaudeMessagingTestSuite class >> #runFullWithErrorLogging) sourceCode.
 	self assert: (source includesSubstring: 'ClaudeLoggingTestResult new').
 	self assert: (source includesSubstring: 'self fullSuite run: result')
+]
+
+{ #category : 'tests' }
+ClaudeLoggingTestResultTest >> testSecretIsNeverInDurableFile [
+	"The planted sk-ant-SECRET must never reach the durable file, only the method frame."
+	| stream fileContents |
+	stream := WriteStream on: String new.
+	self runProbe: #testRaisesError into: stream withDurableFile: self tempLogFile.
+	fileContents := self tempLogFile contents.
+	self assert: (fileContents includesSubstring: 'ClaudeLoggingProbeTestCase>>raiseWithSecret').
+	self deny: (fileContents includesSubstring: 'sk-ant-SECRET')
 ]
 
 { #category : 'tests' }

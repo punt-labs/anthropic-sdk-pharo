@@ -1,7 +1,7 @@
 "
-A TestResult that logs a secret-safe stacktrace whenever a test errors (an uncaught exception, never an assertion failure). The report goes to an injectable log stream defaulting to the Transcript, so suite errors are root-causeable from `make transcript`.
+A TestResult that logs a secret-safe stacktrace whenever a test errors (an uncaught exception, never an assertion failure). Each error block is built once and emitted to three sinks: a DURABLE file (errorLogFile, default .tmp/test-errors.log, appended within a run), the retained errorReports collection (so the blocks survive after the run), and an injectable logStream (default Transcript, the live tail). The Transcript is volatile, so the file and errorReports are what make a mid-run error root-causeable after a long suite.
 
-Each frame is written as a method reference only (for example `ClaudeClient>>sendMessage:`), never the receiver or arguments, so an API key in a frame can never leak into the log. ClaudeApiError instances are enriched with `status=` and `retryAfter=` lines, and nothing else from the response.
+Each frame is written as a method reference only (for example ClaudeClient>>sendMessage:), never the receiver or arguments, so an API key in a frame can never leak into any sink. ClaudeApiError instances are enriched with status= and retryAfter= lines, and nothing else from the response.
 
   | result stream |
   stream := WriteStream on: String new.
@@ -10,7 +10,7 @@ Each frame is written as a method reference only (for example `ClaudeClient>>sen
   stream contents includesSubstring: '[Claude test ERROR]'
   >>> true
 
-  result errorCount
+  result errorReports size
   >>> 1
 
 "
@@ -18,27 +18,30 @@ Class {
 	#name : 'ClaudeLoggingTestResult',
 	#superclass : 'TestResult',
 	#instVars : [
-		'logStream'
+		'logStream',
+		'errorReports',
+		'errorLogFile'
 	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
 
 { #category : 'logging' }
-ClaudeLoggingTestResult >> isSUnitBoundary: aContext [
-	"Answer whether the context belongs to the SUnit run machinery, which marks the end
-	of the application stack worth logging. Stopping here keeps the report focused on the
-	failing code and the test method, and drops the generic SUnit driver frames."
-	| selector |
-	selector := aContext method selector.
-	^ #( #runCase: #runCaseManaged #runCase #performTest ) includes: selector
+ClaudeLoggingTestResult >> appendToFile: aString [
+	"Append the report block to the durable error-log file, creating it if absent.
+	Appends within a run so successive errors accumulate."
+	self errorLogFile ensureCreateFile.
+	self errorLogFile writeStreamDo: [ :s |
+		s setToEnd.
+		s nextPutAll: aString ]
 ]
 
 { #category : 'logging' }
-ClaudeLoggingTestResult >> logError: ex for: aTestCase [
-	"Write a secret-safe error report: header, exception, optional API metadata, and a method-reference-only stack."
+ClaudeLoggingTestResult >> buildReportFor: ex for: aTestCase [
+	"Build the full secret-safe error block as a String: header, exception, optional API
+	metadata, and a method-reference-only stack. Returns the block text without emitting it."
 	| stream |
-	stream := self logStream.
+	stream := WriteStream on: String new.
 	stream
 		nextPutAll: '[Claude test ERROR] ';
 		nextPutAll: aTestCase class name;
@@ -57,7 +60,47 @@ ClaudeLoggingTestResult >> logError: ex for: aTestCase [
 			nextPutAll: ' retryAfter=';
 			nextPutAll: ex retryAfter printString;
 			nextPut: Character lf ].
-	self logStackOf: ex on: stream
+	self logStackOf: ex on: stream.
+	^ stream contents
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorLogFile [
+	"The durable sink file. Defaults to .tmp/test-errors.log under the image working directory.
+	Injectable via #errorLogFile: so tests can point at a throwaway path."
+	^ errorLogFile ifNil: [
+		errorLogFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'test-errors.log' ]
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorLogFile: aFileReference [
+	errorLogFile := aFileReference
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorReports [
+	^ errorReports ifNil: [ errorReports := OrderedCollection new ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> isSUnitBoundary: aContext [
+	"Answer whether the context belongs to the SUnit run machinery, which marks the end
+	of the application stack worth logging. Stopping here keeps the report focused on the
+	failing code and the test method, and drops the generic SUnit driver frames."
+	| selector |
+	selector := aContext method selector.
+	^ #( #runCase: #runCaseManaged #runCase #performTest ) includes: selector
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> logError: ex for: aTestCase [
+	"Build the secret-safe error block once, then emit it to every sink: the durable file
+	(appended), the retained errorReports collection, and the live logStream (Transcript tail)."
+	| block |
+	block := self buildReportFor: ex for: aTestCase.
+	self appendToFile: block.
+	self errorReports add: block.
+	self logStream nextPutAll: block
 ]
 
 { #category : 'logging' }
