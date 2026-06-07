@@ -157,7 +157,7 @@ test-full:
 	@echo ">> Running all Messaging SDK tests (including integration)..."
 	@RESULT=$$($(CURL) -d \
 		"| result | \
-		result := ClaudeMessagingTestSuite fullSuite run. \
+		result := ClaudeMessagingTestSuite runFullWithErrorLogging. \
 		'Tests: ', result runCount printString, \
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
