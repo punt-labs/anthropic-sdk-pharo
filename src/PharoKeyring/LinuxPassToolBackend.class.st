@@ -32,11 +32,11 @@ LinuxPassToolBackend >> lookupService: serviceString account: accountString [
 	so we return the first line, trimmed."
 	| cmd result firstLine |
 	self isAvailable ifFalse: [ ^ nil ].
-	cmd := 'pass show ', (self shellQuote: (self pathForService: serviceString account: accountString)), ' 2>/dev/null'.
+	cmd := 'pass show -- ', (self shellQuote: (self pathForService: serviceString account: accountString)), ' 2>/dev/null'.
 	result := LibC resultOfCommand: cmd.
 	result ifNil: [ ^ nil ].
 	firstLine := result lines isEmpty ifTrue: [ '' ] ifFalse: [ result lines first ].
-	firstLine := firstLine trimBoth.
+	firstLine := firstLine trimRight.
 	firstLine ifEmpty: [ ^ nil ].
 	^ firstLine
 ]

@@ -25,7 +25,7 @@ PharoKeyringIntegrationTest >> deprovisionAccount: accountString [
 	backend := keyring backend.
 	q := [ :s | backend shellQuote: s ].
 	backend name = 'pass' ifTrue: [
-		LibC runCommand: 'pass rm --force ', (q value: testService, '/', accountString), ' > /dev/null 2>&1'.
+		LibC runCommand: 'pass rm --force -- ', (q value: testService, '/', accountString), ' > /dev/null 2>&1'.
 		^ self ].
 	backend name = 'secret-tool' ifTrue: [
 		LibC runCommand: 'secret-tool clear service ', (q value: testService), ' account ', (q value: accountString), ' > /dev/null 2>&1'.
@@ -47,7 +47,7 @@ PharoKeyringIntegrationTest >> provisionAccount: accountString secret: secretStr
 	q := [ :s | backend shellQuote: s ].
 	backend name = 'pass' ifTrue: [
 		status := LibC runCommand: 'printf %s ', (q value: secretString),
-			' | pass insert --multiline --force ',
+			' | pass insert --multiline --force -- ',
 			(q value: testService, '/', accountString), ' > /dev/null 2>&1'.
 		^ (backend exitCodeFrom: status) = 0 ].
 	backend name = 'secret-tool' ifTrue: [
