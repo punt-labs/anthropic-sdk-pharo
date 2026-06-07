@@ -161,7 +161,10 @@ test-full:
 		'Tests: ', result runCount printString, \
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
-		'  Errors: ', result errorCount printString") \
+		'  Errors: ', result errorCount printString, \
+		(result errorCount > 0 \
+			ifTrue: [ String cr, 'Error traces: .tmp/test-errors.log (', result errorReports size printString, ' block(s))' ] \
+			ifFalse: [ '' ])") \
 		&& echo "$${RESULT#\'}" | sed "s/'$$//" \
 		|| echo "Error: is the server running? (make start)"
 
