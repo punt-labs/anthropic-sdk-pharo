@@ -111,7 +111,7 @@ request betas: { ClaudeBetaHeader mcpClient }.
 | `Claude-Messaging-MCP` | MCP connector — request-side server definitions |
 | `Claude-Messaging-Skills` | Skills API — upload reusable tool packages |
 | `Claude-Messaging-Examples` | Runnable usage examples |
-| `PharoKeyring` | Cross-platform OS keyring for API key storage |
+| `PharoKeyring` | Cross-platform OS keyring resolver (read-only) for API keys — `pass`, `secret-tool`, or macOS Keychain |
 
 ## Development
 
