@@ -51,10 +51,15 @@ PharoKeyring >> delete: serviceString account: accountString [
 	backend deleteService: serviceString account: accountString
 ]
 
-{ #category : 'initialization' }
+{ #category : 'private' }
 PharoKeyring >> detectBackend [
 	OSPlatform current isMacOS ifTrue: [ ^ backend := MacOSSecurityBackend new ].
-	OSPlatform current isUnix ifTrue: [ ^ backend := LinuxSecretToolBackend new ].
+	OSPlatform current isUnix ifTrue: [
+		"Prefer pass(1) when it is installed; otherwise fall back to
+		secret-tool. Selection happens once, at detection time."
+		^ backend := LinuxPassToolBackend new isAvailable
+			ifTrue: [ LinuxPassToolBackend new ]
+			ifFalse: [ LinuxSecretToolBackend new ] ].
 	Error signal: 'Unsupported platform: ', OSPlatform current name
 ]
 
