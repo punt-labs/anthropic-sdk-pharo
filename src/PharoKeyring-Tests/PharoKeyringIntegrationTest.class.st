@@ -87,6 +87,6 @@ PharoKeyringIntegrationTest >> testLookupProvisionedSecret [
 	of band through the raw tool. If provisioning was not possible in
 	this environment (e.g. no usable store), skip rather than fail --
 	the read-only contract is what is under test, not the raw tool."
-	provisioned == true ifFalse: [ ^ self skip: 'Out-of-band provisioning unavailable in this environment.' ].
+	provisioned ifFalse: [ ^ self skip: 'Out-of-band provisioning unavailable in this environment.' ].
 	self assert: (keyring lookup: testService account: 'testaccount') equals: 'mysecret'
 ]
