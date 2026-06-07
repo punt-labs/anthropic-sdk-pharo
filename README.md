@@ -38,14 +38,35 @@ response := client sendMessage: (ClaudeMessageRequest new
 Transcript show: response textContent; cr.
 ```
 
-For scripts and examples, use `ClaudeSDKExampleSupport resolveClient`. It walks
-an override ladder, most-specific first, env-var before keyring within each
-tier: (1) a Pharo-specific override — `ANTHROPIC_PHARO_API_KEY` or keyring
-`anthropic/pharo-api-key`; then (2) the general key — `ANTHROPIC_API_KEY` or
-keyring `anthropic/api-key`. The keyring is your OS store (`pass`/`secret-tool`
-on Linux, Keychain on macOS); provision it with e.g.
-`pass insert anthropic/api-key`. Never hard-code a key — the library core takes
-it via `ClaudeClient apiKey:`.
+## API key
+
+`ClaudeClient` takes the key directly and is storage-agnostic —
+`ClaudeClient apiKey: 'sk-ant-...'` — so library code sources the key however it
+likes. For scripts, examples, and integration tests,
+`ClaudeSDKExampleSupport resolveClient` resolves one for you by walking a
+documented ladder, **most-specific first, environment variable before keyring
+within each tier**:
+
+| Tier | Environment variable | Keyring service / account |
+|------|----------------------|---------------------------|
+| 1. Pharo override | `ANTHROPIC_PHARO_API_KEY` | `anthropic` / `pharo-api-key` |
+| 2. General | `ANTHROPIC_API_KEY` | `anthropic` / `api-key` |
+
+The first slot that yields a **non-empty** key wins; a present-but-empty
+environment variable is treated as absent and falls through. The Pharo override
+lets you point a Pharo image at a different key without disturbing the
+`ANTHROPIC_API_KEY` your other tooling uses. The SDK reads only these documented
+locations — it never inspects key values, guesses your store layout, or searches.
+
+Provision the general key in your OS keyring under the documented identity:
+
+| Backend | Command |
+|---------|---------|
+| `pass` (Linux) | `pass insert anthropic/api-key` |
+| `secret-tool` (Linux / GNOME) | `secret-tool store --label='Anthropic API Key' service anthropic account api-key` |
+| macOS Keychain | `security add-generic-password -U -s anthropic -a api-key -w` |
+
+Never hard-code a key in source.
 
 ## Streaming
 
