@@ -72,107 +72,71 @@ ClaudeIntegrationTest >> setUp [
 		cr
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testCountTokens [
 	| params result |
 	params := self newParams: 'Hello' maxTokens: 50 model: self modelOpus46.
-	Transcript nextPutAll: '>> testCountTokens: counting tokens...'; cr.
+	ClaudeTestLog log: '>> testCountTokens: counting tokens...'.
 	result := client countTokens: params.
-	Transcript
-		nextPutAll: '<< Token count: ';
-		nextPutAll: result inputTokens printString;
-		nextPutAll: ' input tokens';
-		cr.
+	ClaudeTestLog log: '<< Token count: ' , result inputTokens printString , ' input tokens'.
 	self assert: (result isKindOf: ClaudeMessageTokensCount).
 	self assert: result inputTokens > 0
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testErrorInvalidKey [
 	"Model choice is immaterial - the 401 fires before model lookup. Use the default helper."
 	| badClient params |
 	badClient := ClaudeClient apiKey: 'sk-invalid'.
 	params := self newParams: 'Hello' maxTokens: 50.
-	Transcript nextPutAll: '>> testErrorInvalidKey: expecting 401...'; cr.
+	ClaudeTestLog log: '>> testErrorInvalidKey: expecting 401...'.
 	self
 		should: [ badClient sendMessage: params ]
 		raise: ClaudeAuthError
 		withExceptionDo: [ :e |
-			Transcript
-				nextPutAll: '<< Caught: ';
-				nextPutAll: e class name;
-				nextPutAll: ' (';
-				nextPutAll: e statusCode printString;
-				nextPutAll: ')';
-				cr.
+			ClaudeTestLog log: '<< Caught: ' , e class name , ' (' , e statusCode printString , ')'.
 			self assert: e statusCode equals: 401 ]
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testErrorUnknownModel [
 	| params |
 	params := ClaudeMessageRequest new.
 	params model: 'nonexistent-model-xyz'.
 	params maxTokens: 50.
 	params addUserMessage: 'Hello'.
-	Transcript nextPutAll: '>> testErrorUnknownModel: expecting 404...'; cr.
+	ClaudeTestLog log: '>> testErrorUnknownModel: expecting 404...'.
 	self
 		should: [ client sendMessage: params ]
 		raise: ClaudeNotFoundError
 		withExceptionDo: [ :e |
-			Transcript
-				nextPutAll: '<< Caught: ';
-				nextPutAll: e class name;
-				nextPutAll: ' (';
-				nextPutAll: e statusCode printString;
-				nextPutAll: ')';
-				cr ]
+			ClaudeTestLog log: '<< Caught: ' , e class name , ' (' , e statusCode printString , ')' ]
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testListModels [
 	| models |
-	Transcript nextPutAll: '>> testListModels: fetching model list...'; cr.
+	ClaudeTestLog log: '>> testListModels: fetching model list...'.
 	models := client listModels.
-	Transcript
-		nextPutAll: '<< Listed: ';
-		nextPutAll: models size printString;
-		nextPutAll: ' models';
-		cr.
+	ClaudeTestLog log: '<< Listed: ' , models size printString , ' models'.
 	self assert: (models isKindOf: OrderedCollection).
 	self deny: models isEmpty.
 	self assert: (models allSatisfy: [ :m | m isKindOf: ClaudeModelInfo ]).
 	self assert: (models anySatisfy: [ :m | m id includesSubstring: 'claude' ])
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testMultiTurnConversation [
 	| params firstResponse secondResponse |
 	params := self newParams: 'What is 2+2? Reply with just the number.' maxTokens: 50 model: self modelSonnet46.
-	Transcript nextPutAll: '>> testMultiTurnConversation: sending first turn...'; cr.
+	ClaudeTestLog log: '>> testMultiTurnConversation: sending first turn...'.
 	firstResponse := client sendMessage: params.
-	Transcript
-		nextPutAll: '<< Turn 1: ';
-		nextPutAll: firstResponse textContent size printString;
-		nextPutAll: ' chars, ';
-		nextPutAll: firstResponse usage inputTokens printString;
-		nextPutAll: ' in / ';
-		nextPutAll: firstResponse usage outputTokens printString;
-		nextPutAll: ' out tokens';
-		cr.
+	ClaudeTestLog log: '<< Turn 1: ' , firstResponse textContent size printString , ' chars, ' , firstResponse usage inputTokens printString , ' in / ' , firstResponse usage outputTokens printString , ' out tokens'.
 	params addAssistantResponse: firstResponse.
 	params addUserMessage: 'And what is that times 3? Reply with just the number.'.
-	Transcript nextPutAll: '>> testMultiTurnConversation: sending second turn...'; cr.
+	ClaudeTestLog log: '>> testMultiTurnConversation: sending second turn...'.
 	secondResponse := client sendMessage: params.
-	Transcript
-		nextPutAll: '<< Turn 2: ';
-		nextPutAll: secondResponse textContent size printString;
-		nextPutAll: ' chars, ';
-		nextPutAll: secondResponse usage inputTokens printString;
-		nextPutAll: ' in / ';
-		nextPutAll: secondResponse usage outputTokens printString;
-		nextPutAll: ' out tokens';
-		cr.
+	ClaudeTestLog log: '<< Turn 2: ' , secondResponse textContent size printString , ' chars, ' , secondResponse usage inputTokens printString , ' in / ' , secondResponse usage outputTokens printString , ' out tokens'.
 	self deny: secondResponse textContent isEmpty
 ]
 
@@ -314,24 +278,13 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 		cr
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testSendMessage [
 	| params response |
 	params := self newParams: 'Reply with exactly: hello' maxTokens: 50 model: self modelOpus47.
-	Transcript
-		nextPutAll: '>> testSendMessage: sending to ';
-		nextPutAll: client baseUrl;
-		cr.
+	ClaudeTestLog log: '>> testSendMessage: sending to ' , client baseUrl.
 	response := client sendMessage: params.
-	Transcript
-		nextPutAll: '<< Response: ';
-		nextPutAll: response textContent size printString;
-		nextPutAll: ' chars, ';
-		nextPutAll: response usage inputTokens printString;
-		nextPutAll: ' in / ';
-		nextPutAll: response usage outputTokens printString;
-		nextPutAll: ' out tokens';
-		cr.
+	ClaudeTestLog log: '<< Response: ' , response textContent size printString , ' chars, ' , response usage inputTokens printString , ' in / ' , response usage outputTokens printString , ' out tokens'.
 	self assert: (response isKindOf: ClaudeMessage).
 	self deny: response textContent isEmpty.
 	self assert: response usage inputTokens > 0.
@@ -339,25 +292,16 @@ ClaudeIntegrationTest >> testSendMessage [
 	self assert: response stopReason equals: #end_turn
 ]
 
-{ #category : 'tests-integration' }
+{ #category : 'tests' }
 ClaudeIntegrationTest >> testStreamMessage [
 	| params events message |
 	params := self newParams: 'Reply with exactly: hi' maxTokens: 50 model: self modelOpus46.
-	Transcript nextPutAll: '>> testStreamMessage: streaming...'; cr.
+	ClaudeTestLog log: '>> testStreamMessage: streaming...'.
 	events := OrderedCollection new.
 	message := client streamMessage: params do: [ :event |
 		events add: event.
-		Transcript
-			nextPutAll: '   event: ';
-			nextPutAll: (event at: 'event');
-			cr ].
-	Transcript
-		nextPutAll: '<< Streaming done: ';
-		nextPutAll: events size printString;
-		nextPutAll: ' events, text: ';
-		nextPutAll: message textContent size printString;
-		nextPutAll: ' chars';
-		cr.
+		ClaudeTestLog log: '   event: ' , (event at: 'event') ].
+	ClaudeTestLog log: '<< Streaming done: ' , events size printString , ' events, text: ' , message textContent size printString , ' chars'.
 	self assert: events size >= 3.
 	self assert: (events anySatisfy: [ :e | (e at: 'event') = 'message_start' ]).
 	self assert: (events anySatisfy: [ :e | (e at: 'event') = 'content_block_start' ]).

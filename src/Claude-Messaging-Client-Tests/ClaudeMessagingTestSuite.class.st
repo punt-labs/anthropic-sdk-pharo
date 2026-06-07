@@ -17,9 +17,6 @@ Use this factory when you only need the Messaging SDK tests. For the combined cr
 Class {
 	#name : 'ClaudeMessagingTestSuite',
 	#superclass : 'ClaudeAbstractTestSuite',
-	#classInstVars : [
-		'lastErrorReports'
-	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }

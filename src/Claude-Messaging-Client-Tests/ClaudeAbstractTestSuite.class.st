@@ -25,6 +25,9 @@ This abstract lives in `Claude-Messaging-Client-Tests` so both the Messaging-lay
 Class {
 	#name : 'ClaudeAbstractTestSuite',
 	#superclass : 'Object',
+	#classInstVars : [
+		'lastErrorReports'
+	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
@@ -53,6 +56,35 @@ ClaudeAbstractTestSuite class >> packageNames [
 	"Answer the test package names aggregated by this suite factory.
 	 Concrete subclasses override with a literal array."
 	^ self subclassResponsibility
+]
+
+{ #category : 'running' }
+ClaudeAbstractTestSuite class >> runFullWithErrorLogging [
+	"Run the full Messaging suite (including integration) under a result that logs uncaught
+	test errors as secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file,
+	the result errorReports collection, and the Transcript. The durable file is truncated and
+	given a header line first, so it reflects exactly this run. The reports are stashed class-side
+	in lastErrorReports so they survive the eval.
+
+	The run itself happens under two Beacon SignalLoggers so that every ClaudeTestLog message
+	is captured both live (TranscriptLogger) and durably (ClaudeFileSignalLogger writing to
+	.tmp/test.log, truncated with a header first). Error stacktraces continue to flow through
+	the result unchanged; the loggers only carry the ClaudeTestLog debug stream. Answer the result."
+	| result logFile |
+	result := ClaudeLoggingTestResult new.
+	result errorLogFile ensureDelete.
+	result errorLogFile ensureCreateFile.
+	result errorLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test errors (run start) ===' ; nextPut: Character lf ].
+	logFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'test.log'.
+	logFile ensureDelete.
+	logFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test log (run start) ===' ; nextPut: Character lf ].
+	TranscriptLogger new runDuring: [
+		(ClaudeFileSignalLogger onFile: logFile) runDuring: [
+			self fullSuite run: result ] ].
+	lastErrorReports := result errorReports.
+	^ result
 ]
 
 { #category : 'instance creation' }
