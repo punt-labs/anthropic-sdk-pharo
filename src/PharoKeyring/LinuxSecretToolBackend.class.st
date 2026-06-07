@@ -1,12 +1,10 @@
 "
-Keyring backend for Linux using secret-tool(1), which accesses GNOME Keyring or KDE Wallet via the Secret Service D-Bus API.
+Read-only keyring backend for Linux using secret-tool(1), which accesses GNOME Keyring or KDE Wallet via the Secret Service D-Bus API. This backend only LOOKS UP secrets the user has already provisioned through their keyring tools -- it never stores or clears entries.
 
 ### Examples
 
-```
-LinuxSecretToolBackend new class name
->>> 'LinuxSecretToolBackend'
-```
+LinuxSecretToolBackend new name
+>>> 'secret-tool'
 
 "
 Class {
@@ -15,13 +13,6 @@ Class {
 	#category : 'PharoKeyring',
 	#package : 'PharoKeyring'
 }
-
-{ #category : 'operations' }
-LinuxSecretToolBackend >> deleteService: serviceString account: accountString [
-	| cmd |
-	cmd := 'secret-tool clear service ', (self shellQuote: serviceString), ' account ', (self shellQuote: accountString).
-	LibC runCommand: cmd
-]
 
 { #category : 'testing' }
 LinuxSecretToolBackend >> isAvailable [
@@ -47,17 +38,4 @@ LinuxSecretToolBackend >> lookupService: serviceString account: accountString [
 { #category : 'accessing' }
 LinuxSecretToolBackend >> name [
 	^ 'secret-tool'
-]
-
-{ #category : 'operations' }
-LinuxSecretToolBackend >> storeService: serviceString account: accountString secret: secretString label: labelString [
-	| cmd status exitCode |
-	cmd := 'printf %s ', (self shellQuote: secretString), ' | secret-tool store --label=', (self shellQuote: labelString), ' service ', (self shellQuote: serviceString), ' account ', (self shellQuote: accountString).
-	status := LibC runCommand: cmd.
-	exitCode := self exitCodeFrom: status.
-	exitCode = 0 ifFalse: [
-		KeyringCommandError new
-			exitCode: exitCode;
-			command: cmd;
-			signal ]
 ]

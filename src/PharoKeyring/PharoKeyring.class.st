@@ -1,12 +1,15 @@
 "
-Cross-platform OS keyring facade. Detects the current platform and delegates to the appropriate backend (secret-tool on Linux, security(1) on macOS). Use withBackend: to inject a mock for testing.
+Cross-platform OS keyring RESOLVER. Looks up secrets the user has already provisioned through the real password tools (pass, secret-tool, or the macOS Keychain) and their own UIs. This class is READ-ONLY: it never stores, overwrites, or deletes secrets -- provisioning is the job of the underlying tools, not of this SDK.
+
+It detects the current platform and delegates to the appropriate backend (pass or secret-tool on Linux, security(1) on macOS). Use withBackend: to inject a mock for testing.
 
 ### Examples
 
-```
-PharoKeyring default backendName
->>> 'secret-tool'
-```
+(PharoKeyring withBackend: MockKeyringBackend new) backendName
+>>> 'mock'
+
+(PharoKeyring withBackend: MockKeyringBackend new) isAvailable
+>>> true
 
 "
 Class {
@@ -46,11 +49,6 @@ PharoKeyring >> backendName [
 	^ backend name
 ]
 
-{ #category : 'operations' }
-PharoKeyring >> delete: serviceString account: accountString [
-	backend deleteService: serviceString account: accountString
-]
-
 { #category : 'private' }
 PharoKeyring >> detectBackend [
 	OSPlatform current isMacOS ifTrue: [ ^ backend := MacOSSecurityBackend new ].
@@ -81,14 +79,4 @@ PharoKeyring >> isAvailable [
 { #category : 'operations' }
 PharoKeyring >> lookup: serviceString account: accountString [
 	^ backend lookupService: serviceString account: accountString
-]
-
-{ #category : 'operations' }
-PharoKeyring >> store: serviceString account: accountString secret: secretString [
-	self store: serviceString account: accountString secret: secretString label: serviceString
-]
-
-{ #category : 'operations' }
-PharoKeyring >> store: serviceString account: accountString secret: secretString label: labelString [
-	backend storeService: serviceString account: accountString secret: secretString label: labelString
 ]

@@ -1,12 +1,10 @@
 "
-Keyring backend for macOS using security(1) to access the system Keychain.
+Read-only keyring backend for macOS using security(1) to look up secrets in the system Keychain. This backend only LOOKS UP secrets the user has already provisioned through Keychain Access or security(1) -- it never adds or deletes keychain items.
 
 ### Examples
 
-```
-MacOSSecurityBackend new class name
->>> 'MacOSSecurityBackend'
-```
+MacOSSecurityBackend new name
+>>> 'security'
 
 "
 Class {
@@ -15,13 +13,6 @@ Class {
 	#category : 'PharoKeyring',
 	#package : 'PharoKeyring'
 }
-
-{ #category : 'operations' }
-MacOSSecurityBackend >> deleteService: serviceString account: accountString [
-	| cmd |
-	cmd := 'security delete-generic-password -s ', (self shellQuote: serviceString), ' -a ', (self shellQuote: accountString), ' 2>/dev/null'.
-	LibC runCommand: cmd
-]
 
 { #category : 'testing' }
 MacOSSecurityBackend >> isAvailable [
@@ -42,17 +33,4 @@ MacOSSecurityBackend >> lookupService: serviceString account: accountString [
 { #category : 'accessing' }
 MacOSSecurityBackend >> name [
 	^ 'security'
-]
-
-{ #category : 'operations' }
-MacOSSecurityBackend >> storeService: serviceString account: accountString secret: secretString label: labelString [
-	| cmd status exitCode |
-	cmd := 'security add-generic-password -U -s ', (self shellQuote: serviceString), ' -a ', (self shellQuote: accountString), ' -w ', (self shellQuote: secretString).
-	status := LibC runCommand: cmd.
-	exitCode := self exitCodeFrom: status.
-	exitCode = 0 ifFalse: [
-		KeyringCommandError new
-			exitCode: exitCode;
-			command: cmd;
-			signal ]
 ]

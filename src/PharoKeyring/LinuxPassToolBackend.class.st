@@ -1,10 +1,14 @@
 "
-Keyring backend for Linux using pass(1), the standard unix password manager (passwordstore.org). Secrets are GPG-encrypted files in a store tree; a (service, account) pair maps to the entry path service/account. The secret is line 1 of each entry. pass is preferred over secret-tool when both are installed (see PharoKeyring detectBackend). pass has no label concept, so the label argument to store is ignored.
+Read-only keyring backend for Linux using pass(1), the standard unix password manager (passwordstore.org). Secrets are GPG-encrypted files in a store tree; a (service, account) pair maps to the entry path service/account, and the secret is line 1 of that entry. pass is preferred over secret-tool when both are installed (see PharoKeyring detectBackend). This backend only LOOKS UP secrets the user has already provisioned with pass -- it never inserts or removes entries.
 
 ### Examples
 
 LinuxPassToolBackend new name
 >>> 'pass'
+
+LinuxPassToolBackend new pathForService: 'anthropic' account: 'api-key'
+>>> 'anthropic/api-key'
+
 "
 Class {
 	#name : 'LinuxPassToolBackend',
@@ -12,16 +16,6 @@ Class {
 	#category : 'PharoKeyring',
 	#package : 'PharoKeyring'
 }
-
-{ #category : 'operations' }
-LinuxPassToolBackend >> deleteService: serviceString account: accountString [
-	"Remove the pass entry at service/account. --force suppresses the
-	confirmation prompt; a missing entry is not treated as an error,
-	mirroring secret-tool clear on the sibling backend."
-	| cmd |
-	cmd := 'pass rm --force ', (self shellQuote: (self pathForService: serviceString account: accountString)).
-	LibC runCommand: cmd
-]
 
 { #category : 'testing' }
 LinuxPassToolBackend >> isAvailable [
@@ -57,25 +51,4 @@ LinuxPassToolBackend >> pathForService: serviceString account: accountString [
 	"The pass entry path. By convention a pass store is organized as a
 	directory tree; we map a (service, account) pair to service/account."
 	^ serviceString, '/', accountString
-]
-
-{ #category : 'operations' }
-LinuxPassToolBackend >> storeService: serviceString account: accountString secret: secretString label: labelString [
-	"Store a secret in the pass store at service/account. The secret is
-	piped via STDIN (the printf pipe) and never appears in argv, so it is
-	not visible in the process table. labelString is IGNORED: pass has no
-	label concept -- the entry path (service/account) is the only identity.
-	--multiline reads the secret verbatim from stdin; --force overwrites
-	an existing entry without prompting."
-	| cmd status exitCode |
-	cmd := 'printf %s ', (self shellQuote: secretString),
-		' | pass insert --multiline --force ',
-		(self shellQuote: (self pathForService: serviceString account: accountString)).
-	status := LibC runCommand: cmd.
-	exitCode := self exitCodeFrom: status.
-	exitCode = 0 ifFalse: [
-		KeyringCommandError new
-			exitCode: exitCode;
-			command: cmd;
-			signal ]
 ]
