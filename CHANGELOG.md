@@ -14,6 +14,16 @@ to [Semantic Versioning](https://semver.org/).
   preferred over `secret-tool` when both are installed (selected once
   at backend detection).
 
+- **Two-tier API-key resolution** in `ClaudeSDKExampleSupport
+  resolveClient`: an override ladder — a Pharo-specific slot
+  (`ANTHROPIC_PHARO_API_KEY` env / keyring `anthropic/pharo-api-key`)
+  then the general key (`ANTHROPIC_API_KEY` env / keyring
+  `anthropic/api-key`) — env-var before keyring within each tier. The
+  keyring identity (`service=anthropic`) renders per backend (`pass`,
+  `secret-tool`, Keychain). Replaces the prior single
+  `anthropic-api/default` lookup, and treats a present-but-empty env
+  var as absent instead of building a client with an empty key.
+
 - `ClaudeMessagingBatchesExample` example class demonstrating the
   full create -> poll -> stream loop with polymorphic outcome
   dispatch via `isSucceeded`/`isErrored`/`isCanceled`/`isExpired`

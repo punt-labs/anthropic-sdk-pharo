@@ -38,9 +38,14 @@ response := client sendMessage: (ClaudeMessageRequest new
 Transcript show: response textContent; cr.
 ```
 
-For scripts and examples, use `ClaudeSDKExampleSupport resolveClient` — it
-reads from the OS keyring, then the `ANTHROPIC_API_KEY` environment variable,
-then prompts. Never hard-code a key.
+For scripts and examples, use `ClaudeSDKExampleSupport resolveClient`. It walks
+an override ladder, most-specific first, env-var before keyring within each
+tier: (1) a Pharo-specific override — `ANTHROPIC_PHARO_API_KEY` or keyring
+`anthropic/pharo-api-key`; then (2) the general key — `ANTHROPIC_API_KEY` or
+keyring `anthropic/api-key`. The keyring is your OS store (`pass`/`secret-tool`
+on Linux, Keychain on macOS); provision it with e.g.
+`pass insert anthropic/api-key`. Never hard-code a key — the library core takes
+it via `ClaudeClient apiKey:`.
 
 ## Streaming
 
