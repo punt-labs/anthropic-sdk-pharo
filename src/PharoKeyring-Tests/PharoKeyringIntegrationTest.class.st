@@ -30,9 +30,8 @@ PharoKeyringIntegrationTest >> deprovisionAccount: accountString [
 	backend name = 'secret-tool' ifTrue: [
 		LibC runCommand: 'secret-tool clear service ', (q value: testService), ' account ', (q value: accountString), ' > /dev/null 2>&1'.
 		^ self ].
-	backend name = 'security' ifTrue: [
-		LibC runCommand: 'security delete-generic-password -s ', (q value: testService), ' -a ', (q value: accountString), ' > /dev/null 2>&1'.
-		^ self ]
+	backend name = 'security' ifFalse: [ ^ self ].
+	LibC runCommand: 'security delete-generic-password -s ', (q value: testService), ' -a ', (q value: accountString), ' > /dev/null 2>&1'
 ]
 
 { #category : 'private' }
@@ -77,7 +76,7 @@ PharoKeyringIntegrationTest >> setUp [
 
 { #category : 'running' }
 PharoKeyringIntegrationTest >> tearDown [
-	(testService notNil and: [ provisioned == true ]) ifTrue: [
+	(testService notNil and: [ provisioned ]) ifTrue: [
 		self deprovisionAccount: 'testaccount' ].
 	super tearDown
 ]
