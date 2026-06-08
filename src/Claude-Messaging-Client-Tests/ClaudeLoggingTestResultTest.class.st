@@ -23,9 +23,15 @@ Class {
 
 { #category : 'private' }
 ClaudeLoggingTestResultTest >> runProbe: aSelector into: aStream [
-	"Run the named probe test under a logging result writing to aStream. Answer the result."
+	"Run the named probe test under a logging result writing to aStream.
+	 Injects a unique temp errorLogFile so an erroring probe never appends to
+	 the canonical .tmp/test-errors.log durable sink (the default path). The
+	 temp file is removed in tearDown. Answer the result."
 	| result |
-	result := ClaudeLoggingTestResult new logStream: aStream; yourself.
+	result := ClaudeLoggingTestResult new
+		logStream: aStream;
+		errorLogFile: self tempLogFile;
+		yourself.
 	result runCase: (ClaudeLoggingProbeTestCase selector: aSelector).
 	^ result
 ]
@@ -183,20 +189,22 @@ ClaudeLoggingTestResultTest >> testRunnerAttachesBeaconLoggers [
 	a ClaudeLoggingTestResult AND the debug log actually received the ClaudeTestLog line — proving the
 	Beacon loggers were attached. Against the old stale override (which omitted the logger nesting) this
 	FAILS because nothing writes the debug file; after the fix it PASSES."
-	| suite result debugFile |
+	| suite result debugFile errorFile |
 	debugFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
 		/ ('test-debug-probe-' , UUID new asString36 , '.log').
+	errorFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+		/ ('test-errors-probe-' , UUID new asString36 , '.log').
 	[
 		suite := TestSuite named: 'C1 probe'.
 		suite addTest: (ClaudeLoggingProbeTestCase selector: #testEmitsLogLine).
 		result := ClaudeAbstractTestSuite
 			runSuite: suite
-			withResult: ClaudeLoggingTestResult new
+			withResult: (ClaudeLoggingTestResult new errorLogFile: errorFile; yourself)
 			debugLogFile: debugFile.
 		self assert: (result isKindOf: ClaudeLoggingTestResult).
 		self assert: debugFile exists.
 		self assert: (debugFile contents includesSubstring: 'probe-debug-line') ]
-		ensure: [ debugFile ensureDelete ]
+		ensure: [ debugFile ensureDelete. errorFile ensureDelete ]
 ]
 
 { #category : 'tests' }
