@@ -12,6 +12,7 @@
 #   make eval       — interactive Smalltalk eval
 #   make test       — run Messaging SDK tests (ClaudeMessagingTestSuite)
 #   make lint       — lint all SDK classes
+#   make lint-md    — markdownlint all **/*.md (mirrors the docs CI gate)
 #   make check      — verify all packages loaded + Iceberg working copy clean
 #   make drift      — compare in-image methods vs on-disk Tonel
 #   make status     — health check
@@ -40,7 +41,7 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
 LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'claude-messaging-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
-.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint drift check check-packages transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift check check-packages transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -211,6 +212,15 @@ lint:
 	DIRTY=$$(echo "$$LINT_OUTPUT" | grep -v ': clean$$' | grep -v '^$$' || true); \
 	if [ -n "$$DIRTY" ]; then echo "  FAIL lint findings present (see above)"; exit 1; fi; \
 	echo "  ok lint clean"
+
+# Mirrors the `docs` CI job (.github/workflows/docs.yml): markdownlint-cli2
+# over **/*.md. The root .markdownlint-cli2.jsonc supplies the ignore set
+# (.beads/, .claude/, .tmp/, resume-*.md, docs/resumes/) automatically.
+# Runs locally so contributors catch findings before the CI gate does.
+lint-md:
+	@echo ">> Linting markdown (**/*.md)..."
+	@npx markdownlint-cli2 "**/*.md"
+	@echo "  ok markdown lint clean"
 
 drift:
 	@echo ">> Checking image-vs-disk method drift..."
