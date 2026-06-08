@@ -38,9 +38,35 @@ response := client sendMessage: (ClaudeMessageRequest new
 Transcript show: response textContent; cr.
 ```
 
-For scripts and examples, use `ClaudeSDKExampleSupport resolveClient` — it
-reads from the OS keyring, then the `ANTHROPIC_API_KEY` environment variable,
-then prompts. Never hard-code a key.
+## API key
+
+`ClaudeClient` takes the key directly and is storage-agnostic —
+`ClaudeClient apiKey: 'sk-ant-...'` — so library code sources the key however it
+likes. For scripts, examples, and integration tests,
+`ClaudeSDKExampleSupport resolveClient` resolves one for you by walking a
+documented ladder, **most-specific first, environment variable before keyring
+within each tier**:
+
+| Tier | Environment variable | Keyring service / account |
+|------|----------------------|---------------------------|
+| 1. Pharo override | `ANTHROPIC_PHARO_API_KEY` | `anthropic` / `pharo-api-key` |
+| 2. General | `ANTHROPIC_API_KEY` | `anthropic` / `api-key` |
+
+The first slot that yields a **non-empty** key wins; a present-but-empty
+environment variable is treated as absent and falls through. The Pharo override
+lets you point a Pharo image at a different key without disturbing the
+`ANTHROPIC_API_KEY` your other tooling uses. The SDK reads only these documented
+locations — it never inspects key values, guesses your store layout, or searches.
+
+Provision the general key in your OS keyring under the documented identity:
+
+| Backend | Command |
+|---------|---------|
+| `pass` (Linux) | `pass insert anthropic/api-key` |
+| `secret-tool` (Linux / GNOME) | `secret-tool store --label='Anthropic API Key' service anthropic account api-key` |
+| macOS Keychain | `security add-generic-password -U -s anthropic -a api-key -w` |
+
+Never hard-code a key in source.
 
 ## Streaming
 
@@ -111,7 +137,7 @@ request betas: { ClaudeBetaHeader mcpClient }.
 | `Claude-Messaging-MCP` | MCP connector — request-side server definitions |
 | `Claude-Messaging-Skills` | Skills API — upload reusable tool packages |
 | `Claude-Messaging-Examples` | Runnable usage examples |
-| `PharoKeyring` | Cross-platform OS keyring for API key storage |
+| `PharoKeyring` | Cross-platform OS keyring resolver (read-only) for API keys — `pass`, `secret-tool`, or macOS Keychain |
 
 ## Development
 

@@ -1,12 +1,10 @@
 "
-Abstract backend protocol for OS keyring access. Subclasses implement platform-specific commands for secret-tool (Linux) and security(1) (macOS).
+Abstract backend protocol for the read-only OS keyring RESOLVER. Subclasses implement platform-specific LOOKUP commands for pass and secret-tool (Linux) and security(1) (macOS). The protocol is read-only: lookupService:account:, isAvailable, and name. Subclasses never store or delete secrets.
 
 ### Examples
 
-```
 PharoKeyringBackend subclasses size >= 2
 >>> true
-```
 
 "
 Class {
@@ -15,11 +13,6 @@ Class {
 	#category : 'PharoKeyring',
 	#package : 'PharoKeyring'
 }
-
-{ #category : 'operations' }
-PharoKeyringBackend >> deleteService: serviceString account: accountString [
-	^ self subclassResponsibility
-]
 
 { #category : 'private' }
 PharoKeyringBackend >> exitCodeFrom: waitStatus [
@@ -49,9 +42,4 @@ PharoKeyringBackend >> shellQuote: aString [
 	sq := String with: $'.
 	replacement := sq, (String with: $\), sq, sq.
 	^ sq, (aString copyReplaceAll: sq with: replacement), sq
-]
-
-{ #category : 'operations' }
-PharoKeyringBackend >> storeService: serviceString account: accountString secret: secretString label: labelString [
-	^ self subclassResponsibility
 ]

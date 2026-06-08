@@ -1,11 +1,12 @@
 "
-Unit tests for PharoKeyring using MockKeyringBackend. Covers store, lookup, delete, has, overwrite, and availability.
+Unit tests for the read-only PharoKeyring resolver using MockKeyringBackend. Covers lookup, has, backend selection, and availability. Fixtures are seeded directly into the mock via seedService:account:secret: -- the keyring itself never stores.
 "
 Class {
 	#name : 'PharoKeyringTest',
 	#superclass : 'TestCase',
 	#instVars : [
-		'keyring'
+		'keyring',
+		'backend'
 	],
 	#category : 'PharoKeyring-Tests',
 	#package : 'PharoKeyring-Tests'
@@ -14,7 +15,8 @@ Class {
 { #category : 'running' }
 PharoKeyringTest >> setUp [
 	super setUp.
-	keyring := PharoKeyring withBackend: MockKeyringBackend new
+	backend := MockKeyringBackend new.
+	keyring := PharoKeyring withBackend: backend
 ]
 
 { #category : 'tests' }
@@ -23,21 +25,8 @@ PharoKeyringTest >> testBackendName [
 ]
 
 { #category : 'tests' }
-PharoKeyringTest >> testDeleteExisting [
-	keyring store: 'svc' account: 'acct' secret: 'pw'.
-	keyring delete: 'svc' account: 'acct'.
-	self assert: (keyring lookup: 'svc' account: 'acct') isNil
-]
-
-{ #category : 'tests' }
-PharoKeyringTest >> testDeleteMissing [
-	"Deleting a non-existent item should not signal an error."
-	keyring delete: 'nosvc' account: 'noacct'
-]
-
-{ #category : 'tests' }
 PharoKeyringTest >> testHasExisting [
-	keyring store: 'svc' account: 'acct' secret: 'pw'.
+	backend seedService: 'svc' account: 'acct' secret: 'pw'.
 	self assert: (keyring has: 'svc' account: 'acct')
 ]
 
@@ -52,19 +41,12 @@ PharoKeyringTest >> testIsAvailable [
 ]
 
 { #category : 'tests' }
+PharoKeyringTest >> testLookupExisting [
+	backend seedService: 'myservice' account: 'user1' secret: 's3cret'.
+	self assert: (keyring lookup: 'myservice' account: 'user1') equals: 's3cret'
+]
+
+{ #category : 'tests' }
 PharoKeyringTest >> testLookupMissing [
 	self assert: (keyring lookup: 'noservice' account: 'nouser') isNil
-]
-
-{ #category : 'tests' }
-PharoKeyringTest >> testOverwrite [
-	keyring store: 'svc' account: 'acct' secret: 'old'.
-	keyring store: 'svc' account: 'acct' secret: 'new'.
-	self assert: (keyring lookup: 'svc' account: 'acct') equals: 'new'
-]
-
-{ #category : 'tests' }
-PharoKeyringTest >> testStoreAndLookup [
-	keyring store: 'myservice' account: 'user1' secret: 's3cret'.
-	self assert: (keyring lookup: 'myservice' account: 'user1') equals: 's3cret'
 ]

@@ -25,6 +25,9 @@ This abstract lives in `Claude-Messaging-Client-Tests` so both the Messaging-lay
 Class {
 	#name : 'ClaudeAbstractTestSuite',
 	#superclass : 'Object',
+	#classInstVars : [
+		'lastErrorReports'
+	],
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
@@ -53,6 +56,55 @@ ClaudeAbstractTestSuite class >> packageNames [
 	"Answer the test package names aggregated by this suite factory.
 	 Concrete subclasses override with a literal array."
 	^ self subclassResponsibility
+]
+
+{ #category : 'running' }
+ClaudeAbstractTestSuite class >> runFullWithErrorLogging [
+	"Run the full suite (including integration) under a result that logs uncaught test errors as
+	secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file, the result
+	errorReports collection, and the Transcript. Every ClaudeTestLog message is captured both live
+	(TranscriptLogger) and durably (.tmp/test.log). The reports are stashed class-side in
+	lastErrorReports so they survive the eval. Answer the result.
+
+	The durable-logging wiring lives in runSuite:withResult:debugLogFile: so a tiny in-memory suite
+	can exercise the exact same path in a test.
+
+	CWD DEPENDENCY: both log files resolve under FileSystem disk workingDirectory / .tmp. If the
+	image''s working directory is not the repo root, the logs land under whatever directory the
+	image was launched from. The resolved ABSOLUTE paths are echoed to the Transcript at run start."
+	| result logFile |
+	result := ClaudeLoggingTestResult new.
+	logFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'test.log'.
+	self runSuite: self fullSuite withResult: result debugLogFile: logFile.
+	lastErrorReports := result errorReports.
+	^ result
+]
+
+{ #category : 'running' }
+ClaudeAbstractTestSuite class >> runSuite: aTestSuite withResult: aLoggingResult debugLogFile: aDebugLogFile [
+	"Run aTestSuite under aLoggingResult with the full durable-logging wiring, identical to the
+	wiring runFullWithErrorLogging uses. Truncates both the error-log file and aDebugLogFile with a
+	header line, echoes their absolute paths to the Transcript, then runs the suite under both Beacon
+	loggers (TranscriptLogger live + ClaudeFileSignalLogger durable). Answer aLoggingResult. Factored
+	out so a tiny in-memory suite can exercise the exact production wiring without the live full suite."
+	aLoggingResult errorLogFile ensureDelete.
+	aLoggingResult errorLogFile ensureCreateFile.
+	aLoggingResult errorLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test errors (run start) ===' ; nextPut: Character lf ].
+	aDebugLogFile ensureDelete.
+	aDebugLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test log (run start) ===' ; nextPut: Character lf ].
+	Transcript
+		nextPutAll: '[Claude test logging] error log: ';
+		nextPutAll: aLoggingResult errorLogFile fullName;
+		nextPut: Character lf;
+		nextPutAll: '[Claude test logging] debug log: ';
+		nextPutAll: aDebugLogFile fullName;
+		nextPut: Character lf.
+	TranscriptLogger new runDuring: [
+		(ClaudeFileSignalLogger onFile: aDebugLogFile) runDuring: [
+			aTestSuite run: aLoggingResult ] ].
+	^ aLoggingResult
 ]
 
 { #category : 'instance creation' }
@@ -95,10 +147,14 @@ ClaudeAbstractTestSuite class >> suiteLabel [
 	^ 'Claude Tests'
 ]
 
-{ #category : 'building' }
+{ #category : 'accessing' }
 ClaudeAbstractTestSuite class >> testClasses [
-	"Answer all TestCase subclasses from this suite factory's packages."
+	"Answer all concrete TestCase subclasses from this suite factory''s
+	 packages. Abstract test classes (isAbstract answers true) are fixtures
+	 driven explicitly elsewhere and must not be auto-collected."
 	^ self packageNames flatCollect: [ :pn |
 		Smalltalk globals allClasses select: [ :c |
-			(c includesBehavior: TestCase) and: [ c package name = pn ] ] ]
+			(c includesBehavior: TestCase)
+				and: [ c isAbstract not
+				and: [ c package name = pn ] ] ] ]
 ]

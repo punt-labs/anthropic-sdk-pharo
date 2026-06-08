@@ -9,6 +9,21 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`pass` keyring backend** (`LinuxPassToolBackend`): `PharoKeyring`
+  resolves API keys from the `pass`(1) password store on Linux,
+  preferred over `secret-tool` when both are installed (selected once
+  at backend detection).
+
+- **Two-tier API-key resolution** in `ClaudeSDKExampleSupport
+  resolveClient`: an override ladder — a Pharo-specific slot
+  (`ANTHROPIC_PHARO_API_KEY` env / keyring `anthropic/pharo-api-key`)
+  then the general key (`ANTHROPIC_API_KEY` env / keyring
+  `anthropic/api-key`) — env-var before keyring within each tier. The
+  keyring identity (`service=anthropic`) renders per backend (`pass`,
+  `secret-tool`, Keychain). Replaces the prior single
+  `anthropic-api/default` lookup, and treats a present-but-empty env
+  var as absent instead of building a client with an empty key.
+
 - `ClaudeMessagingBatchesExample` example class demonstrating the
   full create -> poll -> stream loop with polymorphic outcome
   dispatch via `isSucceeded`/`isErrored`/`isCanceled`/`isExpired`
@@ -44,6 +59,17 @@ to [Semantic Versioning](https://semver.org/).
     variables are wire-mandated by the Anthropic resource shape.
 
 ### Changed
+
+- **BREAKING — `PharoKeyring` is now read-only.** It *resolves*
+  (looks up) API keys the user has provisioned through the OS tools
+  (`pass`/`secret-tool`/Keychain) and no longer stores or deletes
+  them. Removed: `PharoKeyring>>store:account:secret:[label:]` and
+  `delete:account:`, the backend `storeService:…`/`deleteService:…`
+  protocol, and the now-orphaned `KeyringCommandError` and
+  `PharoKeyringError` classes. Provisioning is the password tools'
+  job, not this SDK's. This also removes the only path where a secret
+  entered a shell command or error object (previously a cleartext-key
+  leak vector via `KeyringCommandError`).
 
 - `ClaudeMockServer >> validateRequest:forPath:` now matches the
   synchronous Messages endpoint via `endsWith: '/messages'` (and

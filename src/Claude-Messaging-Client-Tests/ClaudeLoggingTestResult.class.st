@@ -1,0 +1,202 @@
+"
+A TestResult that logs a secret-safe stacktrace whenever a test errors (an uncaught exception, never an assertion failure). Each error block is built once and emitted to three sinks: a DURABLE file (errorLogFile, default .tmp/test-errors.log, appended within a run), the retained errorReports collection (so the blocks survive after the run), and an injectable logStream (default Transcript, the live tail). The Transcript is volatile, so the file and errorReports are what make a mid-run error root-causeable after a long suite.
+
+Each frame is written as a method reference only (for example ClaudeClient>>sendMessage:), never the receiver or arguments, so an API key in a frame can never leak into any sink. ClaudeApiError instances are enriched with status= and retryAfter= lines, and nothing else from the response.
+
+  | result stream |
+  stream := WriteStream on: String new.
+  result := ClaudeLoggingTestResult new logStream: stream; yourself.
+  result runCase: (ClaudeLoggingProbeTestCase selector: #testRaisesError).
+  stream contents includesSubstring: '[Claude test ERROR]'
+  >>> true
+
+  result errorReports size
+  >>> 1
+
+"
+Class {
+	#name : 'ClaudeLoggingTestResult',
+	#superclass : 'TestResult',
+	#instVars : [
+		'logStream',
+		'errorReports',
+		'errorLogFile'
+	],
+	#category : 'Claude-Messaging-Client-Tests',
+	#package : 'Claude-Messaging-Client-Tests'
+}
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> appendToFile: aString [
+	"Append the report block to the durable error-log file, creating it if absent.
+	Appends within a run so successive errors accumulate."
+	self errorLogFile ensureCreateFile.
+	self errorLogFile writeStreamDo: [ :s |
+		s setToEnd.
+		s nextPutAll: aString ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> buildReportFor: ex for: aTestCase [
+	"Build the full secret-safe error block as a String: header, exception, optional API
+	metadata, and a method-reference-only stack. Returns the block text without emitting it."
+	| stream |
+	stream := WriteStream on: String new.
+	stream
+		nextPutAll: '[Claude test ERROR] ';
+		nextPutAll: aTestCase class name;
+		nextPutAll: '>>#';
+		nextPutAll: aTestCase selector;
+		nextPut: Character lf.
+	stream
+		nextPutAll: ex class name;
+		nextPutAll: ': ';
+		nextPutAll: (ex messageText ifNil: [ '' ]);
+		nextPut: Character lf.
+	(ex class == ClaudeApiError or: [ ex class inheritsFrom: ClaudeApiError ]) ifTrue: [
+		stream
+			nextPutAll: 'status=';
+			nextPutAll: ex statusCode printString;
+			nextPutAll: ' retryAfter=';
+			nextPutAll: ex retryAfter printString;
+			nextPut: Character lf ].
+	self logStackOf: ex on: stream.
+	^ stream contents
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> emitToSink: aBlock named: aSinkName [
+	"Run one sink write in isolation. If it raises, the failure must never propagate into the test
+	run or change a result; instead surface a single actionable diagnostic on the live Transcript
+	(via reportSinkFailure:named:) and continue to the next sink."
+	aBlock
+		on: Error
+		do: [ :sinkError | self reportSinkFailure: sinkError named: aSinkName ]
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorLogFile [
+	"The durable sink file. Defaults to .tmp/test-errors.log under the image working directory.
+	Injectable via #errorLogFile: so tests can point at a throwaway path."
+	^ errorLogFile ifNil: [
+		errorLogFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'test-errors.log' ]
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorLogFile: aFileReference [
+	errorLogFile := aFileReference
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> errorReports [
+	^ errorReports ifNil: [ errorReports := OrderedCollection new ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> frameReferenceFor: aContext [
+	"Answer a method-reference-only string for one stack frame, by construction: the method''s
+	defining class and selector (for example ClaudeClient>>sendMessage:). Never renders the
+	receiver or arguments, so a receiver holding a secret cannot leak regardless of its printOn:.
+	Falls back to a safe placeholder for a nil or non-method context, or a method whose
+	methodClass is unavailable."
+	^ aContext
+		ifNil: [ '<nil context>' ]
+		ifNotNil: [ :ctx |
+			ctx method
+				ifNil: [ '<unknown frame>' ]
+				ifNotNil: [ :method |
+					(method methodClass
+						ifNil: [ '<unknown class>' ]
+						ifNotNil: [ :c | c name ]) , '>>' , method selector ] ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> isSUnitBoundary: aContext [
+	"Answer whether the context belongs to the SUnit run machinery, which marks the end of the
+	application stack worth logging. Stopping here keeps the report focused on the failing code and
+	the test method, and drops the generic SUnit driver frames."
+	^ aContext method
+		ifNil: [ false ]
+		ifNotNil: [ :method |
+			#( #runCase: #runCaseManaged #runCase #performTest ) includes: method selector ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> logError: ex for: aTestCase [
+	"Build the secret-safe error block once, then emit it to every sink independently: the
+	durable file (appended), the retained errorReports collection, and the live logStream
+	(Transcript tail). Each sink is fault-isolated: a failure in one sink degrades to the
+	others and can never abort the run or change a test result. A failing sink surfaces one
+	diagnostic on the live Transcript."
+	| block |
+	block := self buildReportFor: ex for: aTestCase.
+	self emitToSink: [ self appendToFile: block ] named: 'durable file (' , self errorLogFile fullName , ')'.
+	self emitToSink: [ self errorReports add: block ] named: 'errorReports collection'.
+	self emitToSink: [ self logStream nextPutAll: block ] named: 'log stream'
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> logStackOf: ex on: stream [
+	"Walk the signaler context chain, writing each frame as a method reference only, derived
+	structurally (class>>selector) so receivers and arguments — and any secret they hold — can
+	never reach the stream. Cap at 40 frames and stop when reaching the SUnit run machinery."
+	| context count |
+	context := ex signalerContext.
+	count := 0.
+	[ context notNil and: [ count < 40 ] ] whileTrue: [
+		(self isSUnitBoundary: context) ifTrue: [ ^ self ].
+		stream
+			nextPutAll: '  ';
+			nextPutAll: (self frameReferenceFor: context);
+			nextPut: Character lf.
+		count := count + 1.
+		context := context sender ]
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> logStream [
+	^ logStream ifNil: [ logStream := Transcript ]
+]
+
+{ #category : 'accessing' }
+ClaudeLoggingTestResult >> logStream: aStream [
+	logStream := aStream
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> reportSinkFailure: aSinkError named: aSinkName [
+	"Surface a single actionable diagnostic about a failed log sink on the live Transcript. This is
+	best-effort and itself isolated: if even the Transcript write fails there is no safe sink left,
+	so the secondary failure is swallowed deliberately rather than allowed to abort the run."
+	[ Transcript
+		nextPutAll: '[Claude test LOG SINK FAILED] ';
+		nextPutAll: aSinkName;
+		nextPutAll: ': ';
+		nextPutAll: (aSinkError messageText ifNil: [ aSinkError class name ]);
+		nextPut: Character lf ]
+		on: Error
+		do: [ :transcriptError | transcriptError return: nil ]
+]
+
+{ #category : 'running' }
+ClaudeLoggingTestResult >> runCase: aTestCase [
+	[
+	aTestCase announce: TestCaseStarted withResult: self.
+	aTestCase runCaseManaged.
+	aTestCase announce: TestCaseEnded withResult: self.
+	self addPass: aTestCase ]
+		on: self class failure , self class skip , self class warning , self class error
+		do: [ :ex |
+			[ ex sunitAnnounce: aTestCase toResult: self ]
+				ensure: [
+					(self shouldLogError: ex) ifTrue: [ self logError: ex for: aTestCase ] ] ]
+]
+
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> shouldLogError: ex [
+	"Answer true only for genuine errors, never assertion failures, skips, or warnings."
+	^ (self class error handles: ex)
+		and: [ (self class failure handles: ex) not
+		and: [ (self class skip handles: ex) not
+		and: [ (self class warning handles: ex) not ] ] ]
+]

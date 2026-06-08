@@ -22,6 +22,13 @@ Class {
 }
 
 { #category : 'accessing' }
+ClaudeMessagingTestSuite class >> lastErrorReports [
+	"The errorReports from the most recent runFullWithErrorLogging, stashed class-side so they
+	survive the eval that produced them. nil until the first such run."
+	^ lastErrorReports
+]
+
+{ #category : 'accessing' }
 ClaudeMessagingTestSuite class >> packageNames [
 	"Answer the 10 Messaging SDK test package names."
 	^ #(
