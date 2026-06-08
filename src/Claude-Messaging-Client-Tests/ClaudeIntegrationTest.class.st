@@ -70,7 +70,7 @@ ClaudeIntegrationTest >> setUp [
 		do: [ :e |
 			(e messageText notNil and: [ e messageText beginsWith: 'No Anthropic API key found' ])
 				ifTrue: [ ^ self skip: e messageText ]
-				ifFalse: [ e signal ] ].
+				ifFalse: [ e pass ] ].
 	Transcript
 		nextPutAll: '=== ';
 		nextPutAll: self selector;

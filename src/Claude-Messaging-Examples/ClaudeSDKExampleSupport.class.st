@@ -95,8 +95,11 @@ ClaudeSDKExampleSupport class >> resolveClient [
 	Error signal: 'No Anthropic API key found. Provision one of (most-specific first):
 1. ANTHROPIC_PHARO_API_KEY env var, or keyring service anthropic account pharo-api-key
 2. ANTHROPIC_API_KEY env var, or keyring service anthropic account api-key
-Keyring by backend:
+Keyring by backend (general account, then the pharo-api-key override slot):
   pass:        pass insert anthropic/api-key
+               pass insert anthropic/pharo-api-key
   secret-tool: secret-tool store --label=''Anthropic API Key'' service anthropic account api-key
-  security:    security add-generic-password -U -s anthropic -a api-key -w'
+               secret-tool store --label=''Anthropic API Key (Pharo)'' service anthropic account pharo-api-key
+  security:    security add-generic-password -U -s anthropic -a api-key -w
+               security add-generic-password -U -s anthropic -a pharo-api-key -w' 
 ]

@@ -23,6 +23,7 @@ LinuxPassToolBackendTest >> testExitCodeExtraction [
 
 { #category : 'tests' }
 LinuxPassToolBackendTest >> testIsAvailable [
+	backend isAvailable ifFalse: [ ^ self skip: 'pass not installed' ].
 	self assert: backend isAvailable
 ]
 

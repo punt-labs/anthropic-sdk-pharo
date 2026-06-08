@@ -67,9 +67,9 @@ PharoKeyringIntegrationTest >> provisionAccount: accountString secret: secretStr
 { #category : 'running' }
 PharoKeyringIntegrationTest >> setUp [
 	super setUp.
-	self assert: OSPlatform current isUnix description: 'Keyring integration tests require Unix (Linux/macOS).'.
+	OSPlatform current isUnix ifFalse: [ ^ self skip: 'Keyring integration tests require Unix (Linux/macOS).' ].
 	keyring := PharoKeyring default.
-	self assert: keyring isAvailable description: 'Keyring backend not available (pass, secret-tool, or security not installed).'.
+	keyring isAvailable ifFalse: [ ^ self skip: 'Keyring backend not available (pass, secret-tool, or security not installed).' ].
 	testService := 'pharotest-', UUID new printString.
 	provisioned := self provisionAccount: 'testaccount' secret: 'mysecret'
 ]
