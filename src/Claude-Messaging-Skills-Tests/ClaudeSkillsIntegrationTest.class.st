@@ -13,8 +13,10 @@ API rejects a second skill that reuses an existing `display_title`, so a
 FIXED title would fail deterministically the moment a prior run left a
 skill behind (which is exactly what happened with the old hard-coded
 'Example Skill' title). A unique title per run never collides with a
-leftover; the curtailment-safe `ensure:` cleanup below never leaks one.
-Together they make this test fully idempotent.
+leftover. Cleanup is best-effort: a transient non-404 API error during
+teardown is logged to Transcript and can leave a skill behind, but
+because each run uses a unique display_title, a leftover can never cause
+a future run to fail.
 
 **Preconditions.** Requires an Anthropic API key, resolved by
 `ClaudeSDKExampleSupport resolveClient` from either the OS keyring
@@ -60,6 +62,7 @@ cleaned up by `uploadOn:displayTitle:` itself, so we do not track it here.
   >>> a TestSuite
 
 
+
 "
 Class {
 	#name : 'ClaudeSkillsIntegrationTest',
@@ -78,9 +81,10 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 	 The display title is unique per run -- 'Pharo SDK Test Skill ' plus a
 	 fresh UUID -- because the Skills API rejects a second skill that reuses
 	 an existing display_title. A fixed title would fail deterministically
-	 the moment a prior run left a skill behind. The unique title combined
-	 with the curtailment-safe ensure: cleanup below makes this test fully
-	 idempotent: it never collides with a leftover and never leaks one.
+	 the moment a prior run left a skill behind. Cleanup is best-effort: a
+	 transient non-404 API error during teardown is logged to Transcript and
+	 can leave a skill behind, but because each run uses a unique
+	 display_title, a leftover can never cause a future run to fail.
 
 	 Note on listSkills: deliberately NOT asserted here. listSkills only
 	 returns the first page (server default 20 items) and on accounts
@@ -133,14 +137,14 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 		 whileNotNil: with a pre-nil page token terminates before the
 		 first fetch and never deletes anything.
 
-		 Cascade ` ; yourself` on the next-page params is mandatory.
-		 ClaudeSkillVersionListParams >> #page: is a plain setter
-		 (`page := aString`) with no explicit ^self, so the keyword-
-		 message expression `ClaudeSkillVersionListParams new page: t`
-		 evaluates to the String t -- not the fresh params instance --
-		 and the next listVersionsFor:params: call would DNU
-		 #asQueryParams on a String, silently never advancing past the
-		 first page. The cascade pins the value to the receiver.
+		 Cascade ` ; yourself` on the next-page params is explicit-return
+		 style. ClaudeSkillVersionListParams >> #page: has no explicit ^ --
+		 in Pharo a ^-less method returns self, so
+		 `ClaudeSkillVersionListParams new page: t` already returns the
+		 params instance, not the String t. The cascade is retained for
+		 clarity (it makes the receiver-as-result intent unambiguous) and
+		 to guard against a future refactor that adds an explicit ^
+		 returning something else.
 
 		 The per-version handler narrows the swallow to ClaudeNotFoundError
 		 (a partial prior cleanup may have removed the resource already);
@@ -182,4 +186,5 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 								nextPutAll: 'unexpected cleanup error deleting skill: ';
 								print: e;
 								cr ] ] ] ]
+
 ]
