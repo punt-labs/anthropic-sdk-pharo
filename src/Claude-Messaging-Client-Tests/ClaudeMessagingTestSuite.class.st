@@ -45,24 +45,6 @@ ClaudeMessagingTestSuite class >> packageNames [
 	)
 ]
 
-{ #category : 'running' }
-ClaudeMessagingTestSuite class >> runFullWithErrorLogging [
-	"Run the full Messaging suite (including integration) under a result that logs uncaught
-	test errors as secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file,
-	the result errorReports collection, and the Transcript. The durable file is truncated and
-	given a header line first, so it reflects exactly this run. The reports are stashed class-side
-	in lastErrorReports so they survive the eval. Answer the result."
-	| result |
-	result := ClaudeLoggingTestResult new.
-	result errorLogFile ensureDelete.
-	result errorLogFile ensureCreateFile.
-	result errorLogFile writeStreamDo: [ :s |
-		s nextPutAll: '=== Claude test errors (run start) ==='; nextPut: Character lf ].
-	self fullSuite run: result.
-	lastErrorReports := result errorReports.
-	^ result
-]
-
 { #category : 'accessing' }
 ClaudeMessagingTestSuite class >> suiteLabel [
 	^ 'Claude Messaging SDK Tests'

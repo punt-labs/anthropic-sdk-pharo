@@ -21,12 +21,27 @@ ClaudeLoggingProbeTestCase class >> isAbstract [
 	^ true
 ]
 
-{ #category : 'tests' }
+{ #category : 'private' }
 ClaudeLoggingProbeTestCase >> failWithApiKey: aKey [ ^ Error signal: 'boom (key length: ' , aKey size printString , ')'
 ]
 
-{ #category : 'tests' }
+{ #category : 'private' }
+ClaudeLoggingProbeTestCase >> raiseViaLeakyReceiver [
+	"Drive a frame whose receiver is a ClaudeLeakySecretHolder holding a secret onto the signaler
+	stack, so a C3 test can prove the logger never renders that receiver."
+	(ClaudeLeakySecretHolder new secret: 'sk-ant-LEAK') raiseInMyOwnFrame
+]
+
+{ #category : 'private' }
 ClaudeLoggingProbeTestCase >> raiseWithSecret [ self failWithApiKey: 'sk-ant-SECRET'
+]
+
+{ #category : 'tests' }
+ClaudeLoggingProbeTestCase >> testEmitsLogLine [
+	"Emits a ClaudeTestLog line so a behavioral test can prove the Beacon debug loggers were
+	actually attached during the run."
+	ClaudeTestLog log: 'probe-debug-line'.
+	self assert: true
 ]
 
 { #category : 'tests' }
@@ -43,4 +58,10 @@ ClaudeLoggingProbeTestCase >> testRaisesApiError [ | e | e := ClaudeRateLimitErr
 
 { #category : 'tests' }
 ClaudeLoggingProbeTestCase >> testRaisesError [ self raiseWithSecret
+]
+
+{ #category : 'tests' }
+ClaudeLoggingProbeTestCase >> testRaisesViaLeakyReceiver [
+	"Errors through a frame whose receiver would leak a secret via printString."
+	self raiseViaLeakyReceiver
 ]

@@ -45,12 +45,31 @@ ClaudeFileSignalLogger >> logFile: aFileReference [
 
 { #category : 'utilities' }
 ClaudeFileSignalLogger >> nextPut: aSignal [
-	"Append the signal's rendered one-line text plus a newline to the durable file.
-	 The write stream is positioned at end so successive signals accumulate."
-
-	self file writeStreamDo: [ :stream |
+	"Append the signal''s rendered one-line text plus a newline to the durable file. The write
+	stream is positioned at end so successive signals accumulate. A write failure must never
+	propagate back into the signaling test (which would mis-attribute a sink fault to that test);
+	instead surface one actionable diagnostic on the live Transcript and continue."
+	[ self file writeStreamDo: [ :stream |
 		stream setToEnd.
 		stream
 			nextPutAll: aSignal printOneLineString;
-			nextPut: Character lf ]
+			nextPut: Character lf ] ]
+		on: Error
+		do: [ :writeError | self reportWriteFailure: writeError ]
+]
+
+{ #category : 'utilities' }
+ClaudeFileSignalLogger >> reportWriteFailure: aWriteError [
+	"Surface a single actionable diagnostic about a failed durable-file write on the live Transcript.
+	Best-effort and self-isolated: if even the Transcript write fails there is no safe sink left, so
+	the secondary failure is swallowed deliberately rather than allowed to abort the signaling test."
+	[ Transcript
+		nextPutAll: '[Claude test LOG SINK FAILED] durable signal file ';
+		nextPutAll: self file fullName;
+		nextPutAll: ': ';
+		nextPutAll: (aWriteError messageText ifNil: [ aWriteError class name ]);
+		nextPutAll: ' — make .tmp/ writable and run from the repo root.';
+		nextPut: Character lf ]
+		on: Error
+		do: [ :transcriptError | transcriptError return: nil ]
 ]

@@ -1,8 +1,14 @@
 "
-Unit tests for ClaudeLoggingTestResult. Each test runs a throwaway probe (ClaudeLoggingProbeTestCase) under a logging result with an injected WriteStream, then asserts on the captured log. Covers: errors are logged, ClaudeApiError status is enriched, passing tests and assertion failures are not logged, and that no secret ever reaches the log.
+Unit tests for ClaudeLoggingTestResult. Each test runs a throwaway probe
+(ClaudeLoggingProbeTestCase) under a logging result with an injected WriteStream and/or
+temp file, then asserts on the captured log. Covers: errors are logged, ClaudeApiError
+status is enriched, passing tests and assertion failures are not logged, no secret ever
+reaches any sink, a file-sink failure cannot abort the run or mask the real error (C2), a
+leaky receiver frame is never rendered (C3), and the Beacon loggers actually attach on the
+runFullWithErrorLogging wiring (C1).
 
-  ClaudeLoggingTestResultTest buildSuite run
-  >>> 6 run, 6 passes, 0 failures, 0 errors
+  ClaudeLoggingTestResultTest buildSuite run errorCount
+  >>> 0
 
 "
 Class {
@@ -110,6 +116,45 @@ ClaudeLoggingTestResultTest >> testErrorReportsRetainedOnError [
 ]
 
 { #category : 'tests' }
+ClaudeLoggingTestResultTest >> testFileSinkFailureDoesNotAbortOrMaskError [
+	"C2 regression guard. Point the durable-file sink at a child path UNDER a regular file, so any
+	attempt to create/write it raises. The original test error MUST still be recorded on the result
+	(errorCount = 1) and the run MUST NOT abort — the other sinks (errorReports, logStream) still get
+	the block. A sink failure can never change a test result or stop the suite."
+	| stream result parentFile badFile |
+	stream := WriteStream on: String new.
+	parentFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+		/ ('c2-parent-' , UUID new asString36).
+	parentFile ensureCreateFile.
+	badFile := parentFile / 'child-under-a-file.log'.
+	[
+		result := ClaudeLoggingTestResult new
+			logStream: stream;
+			errorLogFile: badFile;
+			yourself.
+		result runCase: (ClaudeLoggingProbeTestCase selector: #testRaisesError).
+		self assert: result errorCount equals: 1.
+		self assert: result errorReports size equals: 1.
+		self assert: (stream contents includesSubstring: '[Claude test ERROR]') ]
+		ensure: [ parentFile ensureDelete ]
+]
+
+{ #category : 'tests' }
+ClaudeLoggingTestResultTest >> testLeakyReceiverFrameIsNotRendered [
+	"C3 regression guard. Run a probe that errors through a frame whose RECEIVER (a
+	ClaudeLeakySecretHolder) would render sk-ant-LEAK via printString. Because frames are derived
+	structurally as class>>selector, the log must contain the method reference
+	ClaudeLeakySecretHolder>>raiseInMyOwnFrame but NEVER the leaked receiver state. This fails if the
+	logger ever reverts to context printString."
+	| stream log |
+	stream := WriteStream on: String new.
+	self runProbe: #testRaisesViaLeakyReceiver into: stream.
+	log := stream contents.
+	self assert: (log includesSubstring: 'ClaudeLeakySecretHolder>>raiseInMyOwnFrame').
+	self deny: (log includesSubstring: 'sk-ant-LEAK')
+]
+
+{ #category : 'tests' }
 ClaudeLoggingTestResultTest >> testPassingTestIsNotLogged [
 	| stream result |
 	stream := WriteStream on: String new.
@@ -132,14 +177,26 @@ ClaudeLoggingTestResultTest >> testPlainErrorIsLogged [
 ]
 
 { #category : 'tests' }
-ClaudeLoggingTestResultTest >> testRunnerReturnsLoggingResultType [
-	"Confirm the runner is wired without running the live full suite: it must exist and
-	be declared to build a ClaudeLoggingTestResult."
-	| source |
-	self assert: (ClaudeMessagingTestSuite class >> #runFullWithErrorLogging) notNil.
-	source := (ClaudeMessagingTestSuite class >> #runFullWithErrorLogging) sourceCode.
-	self assert: (source includesSubstring: 'ClaudeLoggingTestResult new').
-	self assert: (source includesSubstring: 'self fullSuite run: result')
+ClaudeLoggingTestResultTest >> testRunnerAttachesBeaconLoggers [
+	"Behavioral C1 regression guard. Drive a tiny suite through the SAME wiring runFullWithErrorLogging
+	uses (runSuite:withResult:debugLogFile:) with an injected temp debug-log file. Assert the result is
+	a ClaudeLoggingTestResult AND the debug log actually received the ClaudeTestLog line — proving the
+	Beacon loggers were attached. Against the old stale override (which omitted the logger nesting) this
+	FAILS because nothing writes the debug file; after the fix it PASSES."
+	| suite result debugFile |
+	debugFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+		/ ('test-debug-probe-' , UUID new asString36 , '.log').
+	[
+		suite := TestSuite named: 'C1 probe'.
+		suite addTest: (ClaudeLoggingProbeTestCase selector: #testEmitsLogLine).
+		result := ClaudeAbstractTestSuite
+			runSuite: suite
+			withResult: ClaudeLoggingTestResult new
+			debugLogFile: debugFile.
+		self assert: (result isKindOf: ClaudeLoggingTestResult).
+		self assert: debugFile exists.
+		self assert: (debugFile contents includesSubstring: 'probe-debug-line') ]
+		ensure: [ debugFile ensureDelete ]
 ]
 
 { #category : 'tests' }

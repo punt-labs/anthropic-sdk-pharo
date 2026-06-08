@@ -60,31 +60,51 @@ ClaudeAbstractTestSuite class >> packageNames [
 
 { #category : 'running' }
 ClaudeAbstractTestSuite class >> runFullWithErrorLogging [
-	"Run the full Messaging suite (including integration) under a result that logs uncaught
-	test errors as secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file,
-	the result errorReports collection, and the Transcript. The durable file is truncated and
-	given a header line first, so it reflects exactly this run. The reports are stashed class-side
-	in lastErrorReports so they survive the eval.
+	"Run the full suite (including integration) under a result that logs uncaught test errors as
+	secret-safe stacktraces to three sinks: the durable .tmp/test-errors.log file, the result
+	errorReports collection, and the Transcript. Every ClaudeTestLog message is captured both live
+	(TranscriptLogger) and durably (.tmp/test.log). The reports are stashed class-side in
+	lastErrorReports so they survive the eval. Answer the result.
 
-	The run itself happens under two Beacon SignalLoggers so that every ClaudeTestLog message
-	is captured both live (TranscriptLogger) and durably (ClaudeFileSignalLogger writing to
-	.tmp/test.log, truncated with a header first). Error stacktraces continue to flow through
-	the result unchanged; the loggers only carry the ClaudeTestLog debug stream. Answer the result."
+	The durable-logging wiring lives in runSuite:withResult:debugLogFile: so a tiny in-memory suite
+	can exercise the exact same path in a test.
+
+	CWD DEPENDENCY: both log files resolve under FileSystem disk workingDirectory / .tmp. If the
+	image''s working directory is not the repo root, the logs land under whatever directory the
+	image was launched from. The resolved ABSOLUTE paths are echoed to the Transcript at run start."
 	| result logFile |
 	result := ClaudeLoggingTestResult new.
-	result errorLogFile ensureDelete.
-	result errorLogFile ensureCreateFile.
-	result errorLogFile writeStreamDo: [ :s |
-		s nextPutAll: '=== Claude test errors (run start) ===' ; nextPut: Character lf ].
 	logFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'test.log'.
-	logFile ensureDelete.
-	logFile writeStreamDo: [ :s |
-		s nextPutAll: '=== Claude test log (run start) ===' ; nextPut: Character lf ].
-	TranscriptLogger new runDuring: [
-		(ClaudeFileSignalLogger onFile: logFile) runDuring: [
-			self fullSuite run: result ] ].
+	self runSuite: self fullSuite withResult: result debugLogFile: logFile.
 	lastErrorReports := result errorReports.
 	^ result
+]
+
+{ #category : 'running' }
+ClaudeAbstractTestSuite class >> runSuite: aTestSuite withResult: aLoggingResult debugLogFile: aDebugLogFile [
+	"Run aTestSuite under aLoggingResult with the full durable-logging wiring, identical to the
+	wiring runFullWithErrorLogging uses. Truncates both the error-log file and aDebugLogFile with a
+	header line, echoes their absolute paths to the Transcript, then runs the suite under both Beacon
+	loggers (TranscriptLogger live + ClaudeFileSignalLogger durable). Answer aLoggingResult. Factored
+	out so a tiny in-memory suite can exercise the exact production wiring without the live full suite."
+	aLoggingResult errorLogFile ensureDelete.
+	aLoggingResult errorLogFile ensureCreateFile.
+	aLoggingResult errorLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test errors (run start) ===' ; nextPut: Character lf ].
+	aDebugLogFile ensureDelete.
+	aDebugLogFile writeStreamDo: [ :s |
+		s nextPutAll: '=== Claude test log (run start) ===' ; nextPut: Character lf ].
+	Transcript
+		nextPutAll: '[Claude test logging] error log: ';
+		nextPutAll: aLoggingResult errorLogFile fullName;
+		nextPut: Character lf;
+		nextPutAll: '[Claude test logging] debug log: ';
+		nextPutAll: aDebugLogFile fullName;
+		nextPut: Character lf.
+	TranscriptLogger new runDuring: [
+		(ClaudeFileSignalLogger onFile: aDebugLogFile) runDuring: [
+			aTestSuite run: aLoggingResult ] ].
+	^ aLoggingResult
 ]
 
 { #category : 'instance creation' }

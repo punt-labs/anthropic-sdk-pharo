@@ -1,9 +1,9 @@
 "
-Proves ClaudeFileSignalLogger appends logged messages to its durable file,
-exercised over a temp file under .tmp that tearDown removes. No live API.
+Proves ClaudeFileSignalLogger appends logged messages to its durable file, exercised over a
+temp file under .tmp that tearDown removes. No live API.
 
-	ClaudeFileSignalLoggerTest buildSuite run
-	>>> 1 run, 1 passed, 0 failed, 0 errors
+  ClaudeFileSignalLoggerTest buildSuite run errorCount
+  >>> 0
 
 "
 Class {

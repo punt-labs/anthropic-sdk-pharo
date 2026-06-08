@@ -64,6 +64,16 @@ ClaudeLoggingTestResult >> buildReportFor: ex for: aTestCase [
 	^ stream contents
 ]
 
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> emitToSink: aBlock named: aSinkName [
+	"Run one sink write in isolation. If it raises, the failure must never propagate into the test
+	run or change a result; instead surface a single actionable diagnostic on the live Transcript
+	(via reportSinkFailure:named:) and continue to the next sink."
+	aBlock
+		on: Error
+		do: [ :sinkError | self reportSinkFailure: sinkError named: aSinkName ]
+]
+
 { #category : 'accessing' }
 ClaudeLoggingTestResult >> errorLogFile [
 	"The durable sink file. Defaults to .tmp/test-errors.log under the image working directory.
@@ -83,31 +93,53 @@ ClaudeLoggingTestResult >> errorReports [
 ]
 
 { #category : 'logging' }
+ClaudeLoggingTestResult >> frameReferenceFor: aContext [
+	"Answer a method-reference-only string for one stack frame, by construction: the method''s
+	defining class and selector (for example ClaudeClient>>sendMessage:). Never renders the
+	receiver or arguments, so a receiver holding a secret cannot leak regardless of its printOn:.
+	Falls back to a safe placeholder for a nil or non-method context, or a method whose
+	methodClass is unavailable."
+	^ aContext
+		ifNil: [ '<nil context>' ]
+		ifNotNil: [ :ctx |
+			ctx method
+				ifNil: [ '<unknown frame>' ]
+				ifNotNil: [ :method |
+					(method methodClass
+						ifNil: [ '<unknown class>' ]
+						ifNotNil: [ :c | c name ]) , '>>' , method selector ] ]
+]
+
+{ #category : 'logging' }
 ClaudeLoggingTestResult >> isSUnitBoundary: aContext [
-	"Answer whether the context belongs to the SUnit run machinery, which marks the end
-	of the application stack worth logging. Stopping here keeps the report focused on the
-	failing code and the test method, and drops the generic SUnit driver frames."
-	| selector |
-	selector := aContext method selector.
-	^ #( #runCase: #runCaseManaged #runCase #performTest ) includes: selector
+	"Answer whether the context belongs to the SUnit run machinery, which marks the end of the
+	application stack worth logging. Stopping here keeps the report focused on the failing code and
+	the test method, and drops the generic SUnit driver frames."
+	^ aContext method
+		ifNil: [ false ]
+		ifNotNil: [ :method |
+			#( #runCase: #runCaseManaged #runCase #performTest ) includes: method selector ]
 ]
 
 { #category : 'logging' }
 ClaudeLoggingTestResult >> logError: ex for: aTestCase [
-	"Build the secret-safe error block once, then emit it to every sink: the durable file
-	(appended), the retained errorReports collection, and the live logStream (Transcript tail)."
+	"Build the secret-safe error block once, then emit it to every sink independently: the
+	durable file (appended), the retained errorReports collection, and the live logStream
+	(Transcript tail). Each sink is fault-isolated: a failure in one sink degrades to the
+	others and can never abort the run or change a test result. A failing sink surfaces one
+	diagnostic on the live Transcript."
 	| block |
 	block := self buildReportFor: ex for: aTestCase.
-	self appendToFile: block.
-	self errorReports add: block.
-	self logStream nextPutAll: block
+	self emitToSink: [ self appendToFile: block ] named: 'durable file (' , self errorLogFile fullName , ')'.
+	self emitToSink: [ self errorReports add: block ] named: 'errorReports collection'.
+	self emitToSink: [ self logStream nextPutAll: block ] named: 'log stream'
 ]
 
 { #category : 'logging' }
 ClaudeLoggingTestResult >> logStackOf: ex on: stream [
-	"Walk the signaler context chain, writing each frame as a method reference only.
-	Never print receivers or arguments, so secrets cannot leak. Cap at 40 frames and
-	stop when reaching the SUnit run machinery."
+	"Walk the signaler context chain, writing each frame as a method reference only, derived
+	structurally (class>>selector) so receivers and arguments — and any secret they hold — can
+	never reach the stream. Cap at 40 frames and stop when reaching the SUnit run machinery."
 	| context count |
 	context := ex signalerContext.
 	count := 0.
@@ -115,7 +147,7 @@ ClaudeLoggingTestResult >> logStackOf: ex on: stream [
 		(self isSUnitBoundary: context) ifTrue: [ ^ self ].
 		stream
 			nextPutAll: '  ';
-			nextPutAll: context printString;
+			nextPutAll: (self frameReferenceFor: context);
 			nextPut: Character lf.
 		count := count + 1.
 		context := context sender ]
@@ -131,6 +163,21 @@ ClaudeLoggingTestResult >> logStream: aStream [
 	logStream := aStream
 ]
 
+{ #category : 'logging' }
+ClaudeLoggingTestResult >> reportSinkFailure: aSinkError named: aSinkName [
+	"Surface a single actionable diagnostic about a failed log sink on the live Transcript. This is
+	best-effort and itself isolated: if even the Transcript write fails there is no safe sink left,
+	so the secondary failure is swallowed deliberately rather than allowed to abort the run."
+	[ Transcript
+		nextPutAll: '[Claude test LOG SINK FAILED] ';
+		nextPutAll: aSinkName;
+		nextPutAll: ': ';
+		nextPutAll: (aSinkError messageText ifNil: [ aSinkError class name ]);
+		nextPut: Character lf ]
+		on: Error
+		do: [ :transcriptError | transcriptError return: nil ]
+]
+
 { #category : 'running' }
 ClaudeLoggingTestResult >> runCase: aTestCase [
 	[
@@ -140,8 +187,9 @@ ClaudeLoggingTestResult >> runCase: aTestCase [
 	self addPass: aTestCase ]
 		on: self class failure , self class skip , self class warning , self class error
 		do: [ :ex |
-			(self shouldLogError: ex) ifTrue: [ self logError: ex for: aTestCase ].
-			ex sunitAnnounce: aTestCase toResult: self ]
+			[ ex sunitAnnounce: aTestCase toResult: self ]
+				ensure: [
+					(self shouldLogError: ex) ifTrue: [ self logError: ex for: aTestCase ] ] ]
 ]
 
 { #category : 'logging' }

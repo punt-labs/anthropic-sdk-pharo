@@ -58,13 +58,19 @@ ClaudeIntegrationTest >> newParams: prompt maxTokens: max model: modelId [
 
 { #category : 'running' }
 ClaudeIntegrationTest >> setUp [
-	"Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
-	cleanly when no key is available so a key-less image (CI fork PR, fresh dev
-	box) does not red-fail the suite. This avoids the 'sh: secret-tool: not found'
-	noise that came from probing secret-tool unconditionally on Linux runners."
+	"Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips cleanly ONLY when
+	no key is available (a key-less image — CI fork PR, fresh dev box — must not red-fail the suite).
+	Any OTHER construction failure is a genuine bug and is re-raised so it fails loudly rather than
+	masquerading as a benign skip. resolveClient signals a plain Error whose message begins with
+	the documented marker below for the no-key case; we match on that marker and re-raise anything
+	else. The skip reason carries the original cause so the absence is visible in the run output."
 	super setUp.
 	[ client := ClaudeSDKExampleSupport resolveClient ]
-		on: Error do: [ :e | ^ self skip: e messageText ].
+		on: Error
+		do: [ :e |
+			(e messageText notNil and: [ e messageText beginsWith: 'No Anthropic API key found' ])
+				ifTrue: [ ^ self skip: e messageText ]
+				ifFalse: [ e signal ] ].
 	Transcript
 		nextPutAll: '=== ';
 		nextPutAll: self selector;
