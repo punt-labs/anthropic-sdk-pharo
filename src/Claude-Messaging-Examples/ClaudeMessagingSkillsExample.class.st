@@ -84,14 +84,27 @@ ClaudeMessagingSkillsExample class >> listOn: aClient [
 
 { #category : 'examples' }
 ClaudeMessagingSkillsExample class >> uploadOn: aClient [
-	"Upload the example skill directory and return the resulting ClaudeSkill.
-	 Wraps the upload in ensure: so the per-call parent directory is
-	 deleted even when the network call raises. Deletes the parent, not
-	 the inner 'example-skill' directory, so the whole scratch tree
-	 is cleaned up."
+	"Upload the example skill directory under the fixed display title
+	 ''Example Skill'' and return the resulting ClaudeSkill. Convenience
+	 entry point for doctests and demos; delegates to uploadOn:displayTitle:.
+	 The live integration test uses uploadOn:displayTitle: with a unique
+	 title per run instead, so it never collides with a leftover skill."
+	^ self uploadOn: aClient displayTitle: 'Example Skill'
+]
+
+{ #category : 'examples' }
+ClaudeMessagingSkillsExample class >> uploadOn: aClient displayTitle: aDisplayTitle [
+	"Upload the example skill directory under aDisplayTitle and return the
+	 resulting ClaudeSkill. Wraps the upload in ensure: so the per-call
+	 parent directory is deleted even when the network call raises. Deletes
+	 the parent, not the inner ''example-skill'' directory, so the whole
+	 scratch tree is cleaned up. The display title is a parameter so callers
+	 (notably the live integration test) can pass a unique value per run and
+	 never collide with a skill left behind by a prior run -- the Skills API
+	 rejects a second skill that reuses an existing display_title."
 	| dir parent |
 	dir := self buildSkillUploadDirectory.
 	parent := dir parent.
-	^ [ aClient uploadDirectory: dir displayTitle: 'Example Skill' ]
+	^ [ aClient uploadDirectory: dir displayTitle: aDisplayTitle ]
 		ensure: [ parent exists ifTrue: [ parent deleteAll ] ]
 ]

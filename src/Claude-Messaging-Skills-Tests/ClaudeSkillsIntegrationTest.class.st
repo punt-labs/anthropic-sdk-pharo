@@ -1,11 +1,20 @@
 "
 Live end-to-end integration test for the Skills API. Uploads a scratch
-skill via `ClaudeMessagingSkillsExample uploadOn:`, round-trips it
-through `getSkill:`, enumerates its versions via `listVersionsFor:`,
-and then deletes every version and the skill itself. This is the first
-live-API test for Skills -- it exists because PR #103 shipped with 96
-mock-green tests and 3 production bugs that the mocks could not have
-caught.
+skill via `ClaudeMessagingSkillsExample uploadOn:displayTitle:` under a
+title that is unique per run, round-trips it through `getSkill:`,
+enumerates its versions via `listVersionsFor:`, and then deletes every
+version and the skill itself. This is the first live-API test for Skills
+-- it exists because PR #103 shipped with 96 mock-green tests and 3
+production bugs that the mocks could not have caught.
+
+**Idempotency.** The display title is built fresh every run as
+`'Pharo SDK Test Skill ' , UUID new asString36`. The Anthropic Skills
+API rejects a second skill that reuses an existing `display_title`, so a
+FIXED title would fail deterministically the moment a prior run left a
+skill behind (which is exactly what happened with the old hard-coded
+'Example Skill' title). A unique title per run never collides with a
+leftover; the curtailment-safe `ensure:` cleanup below never leaks one.
+Together they make this test fully idempotent.
 
 **Preconditions.** Requires an Anthropic API key, resolved by
 `ClaudeSDKExampleSupport resolveClient` from either the OS keyring
@@ -45,10 +54,11 @@ outer `versions` variable is assigned, reusing it would silently skip
 the delete loop and leak the skill in the real Anthropic account.
 Re-listing inside `ensure:` makes the cleanup idempotent and complete.
 The inner scratch directory created by `buildSkillUploadDirectory` is
-cleaned up by `uploadOn:` itself, so we do not track it here.
+cleaned up by `uploadOn:displayTitle:` itself, so we do not track it here.
 
   ClaudeSkillsIntegrationTest buildSuite
   >>> a TestSuite
+
 
 "
 Class {
@@ -65,16 +75,24 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 	 target server-computed values. Cleanup runs even when an assertion
 	 raises.
 
+	 The display title is unique per run -- 'Pharo SDK Test Skill ' plus a
+	 fresh UUID -- because the Skills API rejects a second skill that reuses
+	 an existing display_title. A fixed title would fail deterministically
+	 the moment a prior run left a skill behind. The unique title combined
+	 with the curtailment-safe ensure: cleanup below makes this test fully
+	 idempotent: it never collides with a leftover and never leaks one.
+
 	 Note on listSkills: deliberately NOT asserted here. listSkills only
 	 returns the first page (server default 20 items) and on accounts
 	 with more than 20 existing skills the just-uploaded skill may land
 	 on a later page, producing a false failure. The getSkill: round-trip
 	 below already proves server-side persistence of the upload."
 
-	| client skill roundTripped versions |
+	| client skill roundTripped versions displayTitle |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
-	skill := ClaudeMessagingSkillsExample uploadOn: client.
+	displayTitle := 'Pharo SDK Test Skill ' , UUID new asString36.
+	skill := ClaudeMessagingSkillsExample uploadOn: client displayTitle: displayTitle.
 	[
 		"Nil-guard first, then content. An unexpected nil id would otherwise
 		 raise MessageNotUnderstood from isNotEmpty and obscure the real
