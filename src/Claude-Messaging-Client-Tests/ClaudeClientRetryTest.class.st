@@ -380,6 +380,22 @@ ClaudeClientRetryTest >> testRetryOnServerError [
 ]
 
 { #category : 'tests' }
+ClaudeClientRetryTest >> testRetryOnUpstreamConnectionError [
+	"A 400 carrying a transient upstream connection failure that does NOT
+	 mention MCP must be retried like a 5xx. Mock returns the connection 400
+	 once, then a 200 success; the client must retry and ultimately succeed.
+	 Proves the generalized fix: any transient connection 400 — not only the
+	 MCP variant — gets a second chance within the existing backoff budget."
+	| msg |
+	mockServer respondTo: '/v1/messages' withSequence: {
+		mockServer errorResponse: 400 message: self upstreamConnectionErrorMessage.
+		mockServer successResponse: self messageResponseJson }.
+	msg := client sendMessage: self newParams.
+	self assert: msg id equals: 'msg_test123'.
+	self assert: (mockServer requestCountFor: '/v1/messages') equals: 2
+]
+
+{ #category : 'tests' }
 ClaudeClientRetryTest >> testRetryRespectsRetryAfterHeader [
 	"429 with Retry-After: 1 header. Verify error has retryAfter set."
 	| errorResponse |
@@ -405,4 +421,12 @@ ClaudeClientRetryTest >> testTimeoutErrorHasStatusCode408 [
 	self assert: error statusCode equals: 408.
 	self assert: error isRetryable.
 	self assert: error message equals: 'connection timed out'
+]
+
+{ #category : 'fixtures' }
+ClaudeClientRetryTest >> upstreamConnectionErrorMessage [
+	"A transient upstream connection 400 that does NOT mention MCP. Anthropic
+	 surfaces connection/availability failures with this shape; the client
+	 must treat it like the MCP variant and retry."
+	^ 'Connection error while communicating with the upstream server. The server may be unresponsive.'
 ]

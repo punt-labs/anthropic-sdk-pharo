@@ -16,12 +16,13 @@ ClaudeInvalidRequestErrorTest >> testErrorTypeRegistry [
 	self assert: (registry at: 'invalid_request_error') equals: ClaudeInvalidRequestError
 ]
 
-{ #category : 'testing' }
+{ #category : 'tests' }
 ClaudeInvalidRequestErrorTest >> testGenuineBadRequestIsNotRetryable [
-	"A malformed-request 400 (the common case) must not be retried. Both a
-	 schema-validation message and a generic one stay non-retryable so the
-	 caller fails fast on a real client error."
-	#('max_tokens: field required' 'model is required' 'messages: invalid type')
+	"A malformed-request 400 (the common case) must not be retried. Several
+	 field-validation messages stay non-retryable so the caller fails fast
+	 on a real client error. None contains connection/availability wording,
+	 so the discriminator must reject them all."
+	#('max_tokens is required' 'max_tokens: field required' 'model: field required' 'messages: field required' 'model not found' 'messages: invalid type')
 		do: [ :each |
 			| error |
 			error := ClaudeInvalidRequestError new message: each; yourself.
@@ -29,30 +30,47 @@ ClaudeInvalidRequestErrorTest >> testGenuineBadRequestIsNotRetryable [
 				description: (String streamContents: [ :s |
 					s nextPutAll: 'genuine bad request must not be retryable: '.
 					s nextPutAll: each ]).
-			self deny: error isMCPConnectionError ]
+			self deny: error isTransientConnectionError ]
 ]
 
-{ #category : 'testing' }
+{ #category : 'tests' }
 ClaudeInvalidRequestErrorTest >> testMCPConnectionErrorIsRetryable [
-	"The transient MCP-connector 400 must be retryable. Uses the exact live
-	 message observed from Anthropic when its infrastructure cannot reach the
+	"The transient MCP-connector 400 must remain retryable. MCP is now one
+	 subset of transient connection errors. Uses the exact live message
+	 observed from Anthropic when its infrastructure cannot reach the
 	 external MCP server."
 	| error |
 	error := ClaudeInvalidRequestError new
 		message: 'Connection error while communicating with MCP server. The server may be unavailable or unresponsive.';
 		yourself.
-	self assert: error isMCPConnectionError.
+	self assert: error isTransientConnectionError.
 	self assert: error isRetryable
 ]
 
-{ #category : 'testing' }
+{ #category : 'tests' }
 ClaudeInvalidRequestErrorTest >> testNilMessageIsNotRetryable [
 	"Defensive: a nil message (error constructed without a body) must not
-	 crash isMCPConnectionError with a DNU and must answer not-retryable."
+	 crash isTransientConnectionError with a DNU and must answer
+	 not-retryable."
 	| error |
 	error := ClaudeInvalidRequestError new.
-	self deny: error isMCPConnectionError.
+	self deny: error isTransientConnectionError.
 	self deny: error isRetryable
+]
+
+{ #category : 'tests' }
+ClaudeInvalidRequestErrorTest >> testNonMCPConnectionErrorIsRetryable [
+	"A transient upstream connection 400 that does NOT mention MCP must
+	 also be retryable. Proves the discriminator generalized beyond MCP:
+	 any transient connection/availability 400 recovers within the backoff
+	 budget."
+	| error |
+	error := ClaudeInvalidRequestError new
+		message: 'Connection error while communicating with the upstream server. The server may be unresponsive.';
+		yourself.
+	self deny: (error message includesSubstring: 'MCP').
+	self assert: error isTransientConnectionError.
+	self assert: error isRetryable
 ]
 
 { #category : 'testing' }
