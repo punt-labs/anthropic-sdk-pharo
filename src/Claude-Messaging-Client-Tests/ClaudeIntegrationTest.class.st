@@ -78,7 +78,7 @@ ClaudeIntegrationTest >> setUp [
 		cr
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testCountTokens [
 	| params result |
 	params := self newParams: 'Hello' maxTokens: 50 model: self modelOpus46.
@@ -89,7 +89,7 @@ ClaudeIntegrationTest >> testCountTokens [
 	self assert: result inputTokens > 0
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testErrorInvalidKey [
 	"Model choice is immaterial - the 401 fires before model lookup. Use the default helper."
 	| badClient params |
@@ -104,7 +104,7 @@ ClaudeIntegrationTest >> testErrorInvalidKey [
 			self assert: e statusCode equals: 401 ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testErrorUnknownModel [
 	| params |
 	params := ClaudeMessageRequest new.
@@ -119,7 +119,7 @@ ClaudeIntegrationTest >> testErrorUnknownModel [
 			ClaudeTestLog log: '<< Caught: ' , e class name , ' (' , e statusCode printString , ')' ]
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testListModels [
 	| models |
 	ClaudeTestLog log: '>> testListModels: fetching model list...'.
@@ -131,7 +131,7 @@ ClaudeIntegrationTest >> testListModels [
 	self assert: (models anySatisfy: [ :m | m id includesSubstring: 'claude' ])
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testMultiTurnConversation [
 	| params firstResponse secondResponse |
 	params := self newParams: 'What is 2+2? Reply with just the number.' maxTokens: 50 model: self modelSonnet46.
@@ -284,7 +284,7 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 		cr
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testSendMessage [
 	| params response |
 	params := self newParams: 'Reply with exactly: hello' maxTokens: 50 model: self modelOpus47.
@@ -298,7 +298,7 @@ ClaudeIntegrationTest >> testSendMessage [
 	self assert: response stopReason equals: #end_turn
 ]
 
-{ #category : 'tests' }
+{ #category : 'tests-integration' }
 ClaudeIntegrationTest >> testStreamMessage [
 	| params events message |
 	params := self newParams: 'Reply with exactly: hi' maxTokens: 50 model: self modelOpus46.
