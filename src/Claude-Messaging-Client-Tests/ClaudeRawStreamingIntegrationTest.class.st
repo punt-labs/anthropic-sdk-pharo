@@ -40,6 +40,15 @@ Class {
 	#package : 'Claude-Messaging-Client-Tests'
 }
 
+{ #category : 'asserting' }
+ClaudeRawStreamingIntegrationTest class >> classForTestResult [
+	"Route uncaught errors during integration runs through ClaudeLoggingTestResult,
+	which appends a secret-safe diagnostic block to .tmp/test-errors.log. This applies
+	to every runner that honors classForTestResult, including TestCase>>run and the
+	Dr Tests GUI, not just make test-full."
+	^ ClaudeLoggingTestResult
+]
+
 { #category : 'accessing' }
 ClaudeRawStreamingIntegrationTest >> defaultTimeLimit [
     "A live API round-trip can take tens of seconds across regions,
