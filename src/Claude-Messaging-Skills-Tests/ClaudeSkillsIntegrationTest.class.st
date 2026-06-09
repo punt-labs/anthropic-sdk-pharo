@@ -71,6 +71,18 @@ Class {
 	#package : 'Claude-Messaging-Skills-Tests'
 }
 
+{ #category : 'accessing' }
+ClaudeSkillsIntegrationTest class >> defaultTimeLimit [
+	"This test makes ~6 sequential live API round-trips (upload, getSkill:,
+	 listVersionsFor:, then cleanup: listVersionsFor:params:, deleteVersion:for:,
+	 deleteSkill:). At normal latency that is ~10-12s -- already at or over
+	 SUnit's 10s default -- and under load each call may retry with backoff,
+	 pushing well past it. A realistic per-test clock keeps the multi-call
+	 round-trip from timing out spuriously; every call and every server-computed
+	 assertion still runs."
+	^ 60 seconds
+]
+
 { #category : 'tests-integration' }
 ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 	"Upload a scratch skill, round-trip it through getSkill:, enumerate

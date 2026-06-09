@@ -125,8 +125,12 @@ ClaudeLoggingTestResultTest >> testErrorReportsRetainedOnError [
 ClaudeLoggingTestResultTest >> testFileSinkFailureDoesNotAbortOrMaskError [
 	"C2 regression guard. Point the durable-file sink at a child path UNDER a regular file, so any
 	attempt to create/write it raises. The original test error MUST still be recorded on the result
-	(errorCount = 1) and the run MUST NOT abort — the other sinks (errorReports, logStream) still get
-	the block. A sink failure can never change a test result or stop the suite."
+	(errorCount = 1) and the run MUST NOT abort -- the other sinks (errorReports, logStream) still get
+	the block. A sink failure can never change a test result or stop the suite.
+
+	The deliberate sink-failure diagnostic is captured on the injected logStream (not the real
+	Transcript), so a passing run never pollutes the shared Transcript; we assert the buffer
+	received the [Claude test LOG SINK FAILED] warning to prove it is still emitted."
 	| stream result parentFile badFile |
 	stream := WriteStream on: String new.
 	parentFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
@@ -141,7 +145,8 @@ ClaudeLoggingTestResultTest >> testFileSinkFailureDoesNotAbortOrMaskError [
 		result runCase: (ClaudeLoggingProbeTestCase selector: #testRaisesError).
 		self assert: result errorCount equals: 1.
 		self assert: result errorReports size equals: 1.
-		self assert: (stream contents includesSubstring: '[Claude test ERROR]') ]
+		self assert: (stream contents includesSubstring: '[Claude test ERROR]').
+		self assert: (stream contents includesSubstring: '[Claude test LOG SINK FAILED]') ]
 		ensure: [ parentFile ensureDelete ]
 ]
 
