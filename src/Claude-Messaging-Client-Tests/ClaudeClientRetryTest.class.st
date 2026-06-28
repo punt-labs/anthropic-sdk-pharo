@@ -13,6 +13,14 @@ Class {
 }
 
 { #category : 'fixtures' }
+ClaudeClientRetryTest >> mcpConnectionErrorMessage [
+	"The exact transient message Anthropic returns when its infrastructure
+	 cannot reach the external MCP server. Captured live during the
+	 MCP-reliability investigation."
+	^ 'Connection error while communicating with MCP server. The server may be unavailable or unresponsive.'
+]
+
+{ #category : 'fixtures' }
 ClaudeClientRetryTest >> messageResponseJson [
 	^ '{"id": "msg_test123", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Hello world"}], "model": "claude-sonnet-4-5-20250514", "stop_reason": "end_turn", "stop_sequence": null, "usage": {"input_tokens": 10, "output_tokens": 20}}'
 ]
@@ -210,6 +218,24 @@ ClaudeClientRetryTest >> testNoRetryOnAuthError [
 ]
 
 { #category : 'tests' }
+ClaudeClientRetryTest >> testNoRetryOnGenuineBadRequest [
+	"A genuine malformed-request 400 (different message and meaning from the
+	 MCP-connection failure) must NOT be retried. The client signals
+	 ClaudeInvalidRequestError immediately after the first attempt. Guards
+	 the discriminator: only the MCP-connection signature is retryable; all
+	 other 400s stay permanent client errors."
+	mockServer respondTo: '/v1/messages' withSequence: {
+		mockServer errorResponse: 400 message: 'max_tokens: field required' }.
+	[ client sendMessage: self newParams ]
+		on: ClaudeInvalidRequestError
+		do: [ :err |
+			self assert: (mockServer requestCountFor: '/v1/messages') equals: 1.
+			self deny: err isRetryable.
+			^ self ].
+	self fail: 'Expected ClaudeInvalidRequestError'
+]
+
+{ #category : 'tests' }
 ClaudeClientRetryTest >> testNoRetryOnNotFoundError [
 	"404 is not retryable. Should signal immediately, no retry."
 	mockServer respondTo: '/v1/messages' withSequence: {
@@ -259,6 +285,23 @@ ClaudeClientRetryTest >> testRetryMaxRetriesZero [
 			self assert: (mockServer requestCountFor: '/v1/messages') equals: 1.
 			^ self ].
 	self fail: 'Expected ClaudeServerError'
+]
+
+{ #category : 'tests' }
+ClaudeClientRetryTest >> testRetryOnMCPConnectionError [
+	"A 400 carrying Anthropic's transient MCP-connector failure message
+	 must be retried like a 5xx. Mock returns the MCP-connection 400 once,
+	 then a 200 success; the client must retry and ultimately succeed.
+	 Proves the reliability fix: the MCP connector gets a second chance
+	 within the existing backoff budget rather than failing the call on a
+	 transient upstream hiccup."
+	| msg |
+	mockServer respondTo: '/v1/messages' withSequence: {
+		mockServer errorResponse: 400 message: self mcpConnectionErrorMessage.
+		mockServer successResponse: self messageResponseJson }.
+	msg := client sendMessage: self newParams.
+	self assert: msg id equals: 'msg_test123'.
+	self assert: (mockServer requestCountFor: '/v1/messages') equals: 2
 ]
 
 { #category : 'tests' }
@@ -337,6 +380,22 @@ ClaudeClientRetryTest >> testRetryOnServerError [
 ]
 
 { #category : 'tests' }
+ClaudeClientRetryTest >> testRetryOnUpstreamConnectionError [
+	"A 400 carrying a transient upstream connection failure that does NOT
+	 mention MCP must be retried like a 5xx. Mock returns the connection 400
+	 once, then a 200 success; the client must retry and ultimately succeed.
+	 Proves the generalized fix: any transient connection 400 — not only the
+	 MCP variant — gets a second chance within the existing backoff budget."
+	| msg |
+	mockServer respondTo: '/v1/messages' withSequence: {
+		mockServer errorResponse: 400 message: self upstreamConnectionErrorMessage.
+		mockServer successResponse: self messageResponseJson }.
+	msg := client sendMessage: self newParams.
+	self assert: msg id equals: 'msg_test123'.
+	self assert: (mockServer requestCountFor: '/v1/messages') equals: 2
+]
+
+{ #category : 'tests' }
 ClaudeClientRetryTest >> testRetryRespectsRetryAfterHeader [
 	"429 with Retry-After: 1 header. Verify error has retryAfter set."
 	| errorResponse |
@@ -362,4 +421,12 @@ ClaudeClientRetryTest >> testTimeoutErrorHasStatusCode408 [
 	self assert: error statusCode equals: 408.
 	self assert: error isRetryable.
 	self assert: error message equals: 'connection timed out'
+]
+
+{ #category : 'fixtures' }
+ClaudeClientRetryTest >> upstreamConnectionErrorMessage [
+	"A transient upstream connection 400 that does NOT mention MCP. Anthropic
+	 surfaces connection/availability failures with this shape; the client
+	 must treat it like the MCP variant and retry."
+	^ 'Connection error while communicating with the upstream server. The server may be unresponsive.'
 ]

@@ -165,17 +165,20 @@ ClaudeLoggingTestResult >> logStream: aStream [
 
 { #category : 'logging' }
 ClaudeLoggingTestResult >> reportSinkFailure: aSinkError named: aSinkName [
-	"Surface a single actionable diagnostic about a failed log sink on the live Transcript. This is
-	best-effort and itself isolated: if even the Transcript write fails there is no safe sink left,
-	so the secondary failure is swallowed deliberately rather than allowed to abort the run."
-	[ Transcript
+	"Surface a single actionable diagnostic about a failed log sink. It is written to the
+	injectable logStream (the live tail, default Transcript) rather than a hard-wired
+	Transcript, so a test that injects a captured stream keeps this deliberate diagnostic
+	out of the shared Transcript. This is best-effort and itself isolated: if even the
+	logStream write fails there is no safe sink left, so the secondary failure is swallowed
+	deliberately rather than allowed to abort the run."
+	[ self logStream
 		nextPutAll: '[Claude test LOG SINK FAILED] ';
 		nextPutAll: aSinkName;
 		nextPutAll: ': ';
 		nextPutAll: (aSinkError messageText ifNil: [ aSinkError class name ]);
 		nextPut: Character lf ]
 		on: Error
-		do: [ :transcriptError | transcriptError return: nil ]
+		do: [ :streamError | streamError return: nil ]
 ]
 
 { #category : 'running' }

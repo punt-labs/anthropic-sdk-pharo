@@ -23,9 +23,15 @@ Class {
 
 { #category : 'private' }
 ClaudeLoggingTestResultTest >> runProbe: aSelector into: aStream [
-	"Run the named probe test under a logging result writing to aStream. Answer the result."
+	"Run the named probe test under a logging result writing to aStream.
+	 Injects a unique temp errorLogFile so an erroring probe never appends to
+	 the canonical .tmp/test-errors.log durable sink (the default path). The
+	 temp file is removed in tearDown. Answer the result."
 	| result |
-	result := ClaudeLoggingTestResult new logStream: aStream; yourself.
+	result := ClaudeLoggingTestResult new
+		logStream: aStream;
+		errorLogFile: self tempLogFile;
+		yourself.
 	result runCase: (ClaudeLoggingProbeTestCase selector: aSelector).
 	^ result
 ]
@@ -119,8 +125,12 @@ ClaudeLoggingTestResultTest >> testErrorReportsRetainedOnError [
 ClaudeLoggingTestResultTest >> testFileSinkFailureDoesNotAbortOrMaskError [
 	"C2 regression guard. Point the durable-file sink at a child path UNDER a regular file, so any
 	attempt to create/write it raises. The original test error MUST still be recorded on the result
-	(errorCount = 1) and the run MUST NOT abort — the other sinks (errorReports, logStream) still get
-	the block. A sink failure can never change a test result or stop the suite."
+	(errorCount = 1) and the run MUST NOT abort -- the other sinks (errorReports, logStream) still get
+	the block. A sink failure can never change a test result or stop the suite.
+
+	The deliberate sink-failure diagnostic is captured on the injected logStream (not the real
+	Transcript), so a passing run never pollutes the shared Transcript; we assert the buffer
+	received the [Claude test LOG SINK FAILED] warning to prove it is still emitted."
 	| stream result parentFile badFile |
 	stream := WriteStream on: String new.
 	parentFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
@@ -135,7 +145,8 @@ ClaudeLoggingTestResultTest >> testFileSinkFailureDoesNotAbortOrMaskError [
 		result runCase: (ClaudeLoggingProbeTestCase selector: #testRaisesError).
 		self assert: result errorCount equals: 1.
 		self assert: result errorReports size equals: 1.
-		self assert: (stream contents includesSubstring: '[Claude test ERROR]') ]
+		self assert: (stream contents includesSubstring: '[Claude test ERROR]').
+		self assert: (stream contents includesSubstring: '[Claude test LOG SINK FAILED]') ]
 		ensure: [ parentFile ensureDelete ]
 ]
 
@@ -183,20 +194,22 @@ ClaudeLoggingTestResultTest >> testRunnerAttachesBeaconLoggers [
 	a ClaudeLoggingTestResult AND the debug log actually received the ClaudeTestLog line — proving the
 	Beacon loggers were attached. Against the old stale override (which omitted the logger nesting) this
 	FAILS because nothing writes the debug file; after the fix it PASSES."
-	| suite result debugFile |
+	| suite result debugFile errorFile |
 	debugFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
 		/ ('test-debug-probe-' , UUID new asString36 , '.log').
+	errorFile := (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+		/ ('test-errors-probe-' , UUID new asString36 , '.log').
 	[
 		suite := TestSuite named: 'C1 probe'.
 		suite addTest: (ClaudeLoggingProbeTestCase selector: #testEmitsLogLine).
 		result := ClaudeAbstractTestSuite
 			runSuite: suite
-			withResult: ClaudeLoggingTestResult new
+			withResult: (ClaudeLoggingTestResult new errorLogFile: errorFile; yourself)
 			debugLogFile: debugFile.
 		self assert: (result isKindOf: ClaudeLoggingTestResult).
 		self assert: debugFile exists.
 		self assert: (debugFile contents includesSubstring: 'probe-debug-line') ]
-		ensure: [ debugFile ensureDelete ]
+		ensure: [ debugFile ensureDelete. errorFile ensureDelete ]
 ]
 
 { #category : 'tests' }
