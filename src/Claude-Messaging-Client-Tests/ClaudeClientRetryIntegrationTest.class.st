@@ -55,6 +55,7 @@ ClaudeClientRetryIntegrationTest >> newParams [
 { #category : 'running' }
 ClaudeClientRetryIntegrationTest >> setUp [
 	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
 	mockServer := ClaudeMockServer startOn: 0.
 	client := ClaudeClient apiKey: 'test-key' baseUrl: 'http://localhost:', mockServer port printString timeout: 5.
 	client maxRetries: 2
@@ -62,7 +63,8 @@ ClaudeClientRetryIntegrationTest >> setUp [
 
 { #category : 'running' }
 ClaudeClientRetryIntegrationTest >> tearDown [
-	mockServer stop.
+	[ ClaudeTestLog endActivityFor: self selector ]
+		ensure: [ mockServer ifNotNil: [ :s | s stop ] ].
 	super tearDown
 ]
 
@@ -81,6 +83,7 @@ ClaudeClientRetryIntegrationTest >> testJitterBasedBackoffFiresOnPlain429 [
 	start := DateAndTime now.
 	response := client sendMessage: self newParams.
 	elapsed := DateAndTime now - start.
+	ClaudeTestLog log: '<< retry fired; requests=' , (mockServer requestCountFor: '/v1/messages') printString , ' elapsed=' , elapsed asMilliSeconds printString , 'ms'.
 	self
 		assert: response id = 'msg_test123'
 		description: 'retried request returned 200 content; id was ', response id printString.
@@ -112,6 +115,7 @@ ClaudeClientRetryIntegrationTest >> testTimeoutRaisesClaudeTimeoutErrorAfterReal
 		should: [ client sendMessage: self newParams ]
 		raise: ClaudeTimeoutError.
 	elapsed := DateAndTime now - start.
+	ClaudeTestLog log: '<< ClaudeTimeoutError raised after ' , elapsed asMilliSeconds printString , 'ms'.
 	self
 		assert: (elapsed asMilliSeconds between: 800 and: 3000)
 		description: 'timeout fired near configured 1s (with CI scheduler slack up to 3s); got ', elapsed asMilliSeconds printString, 'ms'

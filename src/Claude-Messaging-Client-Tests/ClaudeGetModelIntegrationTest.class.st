@@ -33,6 +33,18 @@ ClaudeGetModelIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeGetModelIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeGetModelIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeGetModelIntegrationTest >> testGetModelReturnsModelInfoForKnownId [
 	"Drive a live /v1/models/:id call via ClaudeClient>>getModel: and
@@ -52,7 +64,9 @@ ClaudeGetModelIntegrationTest >> testGetModelReturnsModelInfoForKnownId [
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	modelId := ClaudeModel sonnet46.
+	ClaudeTestLog log: '>> getModel ' , modelId printString.
 	info := client getModel: modelId.
+	ClaudeTestLog log: '<< displayName=' , info displayName printString , ' type=' , info type printString.
 	self
 		assert: (info isKindOf: ClaudeModelInfo)
 		description: 'getModel: must return a ClaudeModelInfo; got ' , info class name.

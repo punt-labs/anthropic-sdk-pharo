@@ -39,7 +39,9 @@ ClaudeServerToolIntegrationTest >> assertBashWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeBashTool new.
   params addUserMessage: 'Run the command: echo hello world. You must use the bash tool.'.
+  ClaudeTestLog log: '>> bash server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   hasToolUse := response content anySatisfy: [ :block |
     block isKindOf: ClaudeToolUseBlock ].
   self assert: hasToolUse description: 'Expected a tool_use block for bash server tool'
@@ -53,7 +55,9 @@ ClaudeServerToolIntegrationTest >> assertCodeExecutionWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeCodeExecutionTool new.
   params addUserMessage: 'Write a Python script that prints hello world and run it. You must use the code_execution tool.'.
+  ClaudeTestLog log: '>> code_execution server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   hasCodeResult := response content anySatisfy: [ :block |
     (block isKindOf: ClaudeBashResultBlock) or: [ block isKindOf: ClaudeTextEditorResultBlock ] ].
   self assert: hasCodeResult description: 'Expected at least one ClaudeBashResultBlock or ClaudeTextEditorResultBlock'.
@@ -68,7 +72,9 @@ ClaudeServerToolIntegrationTest >> assertMemoryWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeMemoryTool new.
   params addUserMessage: 'Remember that my favorite color is blue. You must use the memory tool.'.
+  ClaudeTestLog log: '>> memory server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   self assert: response content isNotEmpty description: 'Expected a non-empty response'
 ]
 
@@ -80,7 +86,9 @@ ClaudeServerToolIntegrationTest >> assertTextEditorWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeTextEditorTool new.
   params addUserMessage: 'Create a file called /tmp/test.txt containing hello world. You must use the str_replace_based_edit_tool.'.
+  ClaudeTestLog log: '>> text_editor server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   self assert: response content isNotEmpty description: 'Expected a non-empty response'
 ]
 
@@ -88,7 +96,9 @@ ClaudeServerToolIntegrationTest >> assertTextEditorWorksOn: aModel [
 ClaudeServerToolIntegrationTest >> assertToolSearchBm25WorksOn: aModel [
   | params response |
   params := self toolSearchParamsFor: aModel withServerTool: ClaudeToolSearchBm25Tool new.
+  ClaudeTestLog log: '>> tool_search_bm25 server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   self assert: response content isNotEmpty description: 'Expected a non-empty response'
 ]
 
@@ -96,7 +106,9 @@ ClaudeServerToolIntegrationTest >> assertToolSearchBm25WorksOn: aModel [
 ClaudeServerToolIntegrationTest >> assertToolSearchRegexWorksOn: aModel [
   | params response |
   params := self toolSearchParamsFor: aModel withServerTool: ClaudeToolSearchRegexTool new.
+  ClaudeTestLog log: '>> tool_search_regex server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   self assert: response content isNotEmpty description: 'Expected a non-empty response'
 ]
 
@@ -108,7 +120,9 @@ ClaudeServerToolIntegrationTest >> assertWebFetchWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeWebFetchTool new.
   params addUserMessage: 'Fetch the content at https://httpbin.org/html and summarize it. You must use the web_fetch tool.'.
+  ClaudeTestLog log: '>> web_fetch server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   hasFetchResult := response content anySatisfy: [ :block |
     block isKindOf: ClaudeWebFetchResultBlock ].
   self assert: hasFetchResult description: 'Expected at least one ClaudeWebFetchResultBlock'.
@@ -123,7 +137,9 @@ ClaudeServerToolIntegrationTest >> assertWebSearchWorksOn: aModel [
   params maxTokens: 1024.
   params addServerTool: ClaudeWebSearchTool new.
   params addUserMessage: 'Search the web for the latest Pharo Smalltalk release news. You must use the web_search tool.'.
+  ClaudeTestLog log: '>> web_search server tool on ' , aModel printString.
   response := client sendMessage: params.
+  ClaudeTestLog log: '<< response blocks=' , response content size printString.
   hasSearchResult := response content anySatisfy: [ :block |
     block isKindOf: ClaudeWebSearchResultBlock ].
   self assert: hasSearchResult description: 'Expected at least one ClaudeWebSearchResultBlock'.
@@ -138,12 +154,19 @@ ClaudeServerToolIntegrationTest >> defaultTimeLimit [
 
 { #category : 'running' }
 ClaudeServerToolIntegrationTest >> setUp [
-  "Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
-  cleanly when no key is available so a key-less image (CI fork PR, fresh dev
-  box) does not red-fail the suite."
-  super setUp.
-  [ client := ClaudeSDKExampleSupport resolveClient ]
-    on: Error do: [ :e | ^ self skip: e messageText ]
+	"Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
+	cleanly when no key is available so a key-less image (CI fork PR, fresh dev
+	box) does not red-fail the suite."
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
+	[ client := ClaudeSDKExampleSupport resolveClient ]
+		on: Error do: [ :e | ^ self skip: e messageText ]
+]
+
+{ #category : 'running' }
+ClaudeServerToolIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
 ]
 
 { #category : 'tests-integration' }

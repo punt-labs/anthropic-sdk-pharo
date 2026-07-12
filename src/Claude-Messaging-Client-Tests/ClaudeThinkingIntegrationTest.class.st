@@ -65,6 +65,18 @@ ClaudeThinkingIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeThinkingIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeThinkingIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeThinkingIntegrationTest >> testThinkingBlockReturnedAgainstAnthropic [
 	"Drive a sendMessage: call with extended thinking enabled against
@@ -80,8 +92,10 @@ ClaudeThinkingIntegrationTest >> testThinkingBlockReturnedAgainstAnthropic [
 	| client response thinkingBlocks first |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> thinking-enabled request'.
 	response := ClaudeMessagingThinkingExample runOn: client.
 	thinkingBlocks := response content select: [ :b | b isThinkingBlock ].
+	ClaudeTestLog log: '<< ' , thinkingBlocks size printString , ' thinking block(s)'.
 	self
 		assert: thinkingBlocks isNotEmpty
 		description: 'response must contain at least one server-generated thinking block'.

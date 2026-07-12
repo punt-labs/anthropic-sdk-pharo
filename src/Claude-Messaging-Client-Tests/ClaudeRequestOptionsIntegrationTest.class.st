@@ -33,6 +33,18 @@ ClaudeRequestOptionsIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeRequestOptionsIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeRequestOptionsIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeRequestOptionsIntegrationTest >> testRequestOptionsFieldsClearServerValidationAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with both
@@ -52,7 +64,9 @@ ClaudeRequestOptionsIntegrationTest >> testRequestOptionsFieldsClearServerValida
 	| client response |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> requestOptions (metadata + serviceTier)'.
 	response := ClaudeMessagingRequestOptionsExample runOn: client.
+	ClaudeTestLog log: '<< stopReason=' , response stopReason printString , ' inputTokens=' , response usage inputTokens printString.
 	self
 		assert: response stopReason = #end_turn
 		description: 'server must accept metadata + serviceTier and complete cleanly (stopReason = #end_turn)'.

@@ -48,6 +48,18 @@ ClaudeMessageDecompositionIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeMessageDecompositionIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeMessageDecompositionIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeMessageDecompositionIntegrationTest >> testRequestIdSurvivesRoundTrip [
 	"Send a normal message request and assert the response carries a
@@ -66,6 +78,7 @@ ClaudeMessageDecompositionIntegrationTest >> testRequestIdSurvivesRoundTrip [
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	response := client sendMessage: self buildSimpleRequest.
+	ClaudeTestLog log: '<< requestId=' , response requestId printString.
 	self
 		assert: response responseMetadata isNotNil
 		description: 'response must have a ClaudeResponseMetadata attached'.
@@ -94,6 +107,7 @@ ClaudeMessageDecompositionIntegrationTest >> testStopDetailsPopulatedOnNormalEnd
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	response := client sendMessage: self buildSimpleRequest.
+	ClaudeTestLog log: '<< stopReason=' , response stopDetails stopReason printString , ' category=' , response stopDetails category printString.
 	self
 		assert: response stopDetails isNotNil
 		description: 'response must have ClaudeStopDetails attached'.

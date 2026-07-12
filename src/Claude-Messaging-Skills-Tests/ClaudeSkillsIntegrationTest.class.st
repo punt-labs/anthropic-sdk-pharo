@@ -83,6 +83,18 @@ ClaudeSkillsIntegrationTest class >> defaultTimeLimit [
 	^ 60 seconds
 ]
 
+{ #category : 'running' }
+ClaudeSkillsIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeSkillsIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 	"Upload a scratch skill, round-trip it through getSkill:, enumerate
@@ -108,7 +120,10 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	displayTitle := 'Pharo SDK Test Skill ' , UUID new asString36.
+	ClaudeTestLog log: 'display title: ' , displayTitle.
+	ClaudeTestLog log: 'uploading skill...'.
 	skill := ClaudeMessagingSkillsExample uploadOn: client displayTitle: displayTitle.
+	ClaudeTestLog log: 'uploaded: skill id=' , skill id printString , ' createdAt=' , skill createdAt printString , ' latestVersion=' , skill latestVersion printString.
 	[
 		"Nil-guard first, then content. An unexpected nil id would otherwise
 		 raise MessageNotUnderstood from isNotEmpty and obscure the real
@@ -125,7 +140,9 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 		self
 			assert: skill latestVersion isNotNil
 			description: 'server-assigned latestVersion id must be populated after upload'.
+		ClaudeTestLog log: 'getSkill: round-trip for ' , skill id.
 		roundTripped := client getSkill: skill id.
+		ClaudeTestLog log: 'getSkill: returned id=' , roundTripped id printString , ' matched=' , (roundTripped id = skill id) printString.
 		self
 			assert: roundTripped class == ClaudeSkill
 			description: 'getSkill: must return a ClaudeSkill (not a ClaudeSkillVersion)'.
@@ -136,6 +153,7 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 			assert: roundTripped id = skill id
 			description: 'getSkill: must round-trip the uploaded skill id'.
 		versions := client listVersionsFor: skill id.
+		ClaudeTestLog log: 'listVersionsFor: returned ' , versions data size printString , ' version(s)'.
 		self
 			assert: versions data isNotEmpty
 			description: 'listVersionsFor: must report at least one server-side version'
@@ -167,10 +185,13 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 		 discipline applies to the final deleteSkill:."
 		skill ifNotNil: [
 			| listParams page |
+			ClaudeTestLog log: 'cleanup: deleting versions for ' , skill id.
 			[ listParams := ClaudeSkillVersionListParams new.
 			  page := client listVersionsFor: skill id params: listParams.
 			  [ page data do: [ :v |
-				  [ client deleteVersion: v version for: skill id ]
+				  [ client deleteVersion: v version for: skill id.
+				    ClaudeTestLog log: (String streamContents: [ :s |
+						s nextPutAll: 'cleanup: deleted version '; nextPutAll: v version ]) ]
 					on: ClaudeApiError do: [ :e |
 						e class = ClaudeNotFoundError
 							ifFalse: [
@@ -190,13 +211,15 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 						nextPutAll: 'unexpected cleanup error listing versions: ';
 						print: e;
 						cr ].
-			[ client deleteSkill: skill id ]
+			[ client deleteSkill: skill id.
+			  ClaudeTestLog log: 'cleanup: deleted skill ' , skill id ]
 				on: ClaudeApiError do: [ :e |
 					e class = ClaudeNotFoundError
 						ifFalse: [
 							Transcript
 								nextPutAll: 'unexpected cleanup error deleting skill: ';
 								print: e;
-								cr ] ] ] ]
+								cr ] ] ].
+		ClaudeTestLog log: 'round-trip complete' ]
 
 ]

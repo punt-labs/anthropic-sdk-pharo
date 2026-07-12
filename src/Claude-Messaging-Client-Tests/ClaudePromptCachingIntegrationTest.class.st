@@ -61,6 +61,18 @@ ClaudePromptCachingIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudePromptCachingIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudePromptCachingIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudePromptCachingIntegrationTest >> testPromptCachingCacheCreationAndReadCyclesAgainstAnthropic [
 	"Drive two sequential sendMessage: calls against api.anthropic.com with
@@ -86,6 +98,7 @@ ClaudePromptCachingIntegrationTest >> testPromptCachingCacheCreationAndReadCycle
 	pair := ClaudeMessagingPromptCachingExample runTwiceOn: client.
 	first := pair first.
 	second := pair second.
+	ClaudeTestLog log: '<< cacheCreation=' , first usage cacheCreationInputTokens printString , ' cacheRead=' , second usage cacheReadInputTokens printString.
 	"Server-computed: cold call creates a new cache entry for the block."
 	self
 		assert: (first usage cacheCreationInputTokens isNotNil

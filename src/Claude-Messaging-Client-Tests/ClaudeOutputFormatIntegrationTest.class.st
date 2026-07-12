@@ -33,6 +33,18 @@ ClaudeOutputFormatIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeOutputFormatIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeOutputFormatIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeOutputFormatIntegrationTest >> testJsonSchemaOutputFormatProducesConformingJsonAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with a
@@ -62,6 +74,7 @@ ClaudeOutputFormatIntegrationTest >> testJsonSchemaOutputFormatProducesConformin
 		assert: text isNotEmpty
 		description: 'response must carry non-empty text content'.
 	parsed := STONJSON fromString: text.
+	ClaudeTestLog log: '<< parsed JSON keys=' , parsed keys asArray printString.
 	name := parsed at: 'name' ifAbsent: [ nil ].
 	age := parsed at: 'age' ifAbsent: [ nil ].
 	self

@@ -57,6 +57,18 @@ ClaudeSystemPromptIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeSystemPromptIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeSystemPromptIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeSystemPromptIntegrationTest >> testSystemPromptConstraintsResponseAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with a
@@ -70,6 +82,7 @@ ClaudeSystemPromptIntegrationTest >> testSystemPromptConstraintsResponseAgainstA
 		on: Error do: [ :e | ^ self skip ].
 	response := ClaudeMessagingSystemPromptExample runOn: client.
 	text := response textContent.
+	ClaudeTestLog log: '<< markerPresent=' , (text includesSubstring: 'MKR-%%%') printString.
 	self
 		assert: response stopReason = #end_turn
 		description: 'server must complete generation cleanly (stopReason = #end_turn)'.

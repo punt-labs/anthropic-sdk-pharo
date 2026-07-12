@@ -65,17 +65,19 @@ ClaudeIntegrationTest >> setUp [
 	the documented marker below for the no-key case; we match on that marker and re-raise anything
 	else. The skip reason carries the original cause so the absence is visible in the run output."
 	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
 	[ client := ClaudeSDKExampleSupport resolveClient ]
 		on: Error
 		do: [ :e |
 			(e messageText notNil and: [ e messageText beginsWith: 'No Anthropic API key found' ])
 				ifTrue: [ ^ self skip: e messageText ]
-				ifFalse: [ e pass ] ].
-	Transcript
-		nextPutAll: '=== ';
-		nextPutAll: self selector;
-		nextPutAll: ' ===';
-		cr
+				ifFalse: [ e pass ] ]
+]
+
+{ #category : 'running' }
+ClaudeIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
 ]
 
 { #category : 'tests-integration' }
@@ -169,6 +171,7 @@ ClaudeIntegrationTest >> testRealStreamingClose [
 	sock readHeaders.
 	decoder := ClaudeSSEDecoder onStream: sock.
 	[ decoder hasNext ] whileTrue: [ decoder nextEvent ].
+	ClaudeTestLog log: '<< stream drained; closing socket'.
 	sock close.
 	self deny: sock isConnected
 ]
@@ -195,6 +198,7 @@ ClaudeIntegrationTest >> testRealStreamingConnection [
 		} asDictionary).
 	statusCode := sock readStatusLine.
 	headers := sock readHeaders.
+	ClaudeTestLog log: '<< streaming connect status=' , statusCode printString.
 	self assert: statusCode equals: 200.
 	self assert: ((headers at: 'content-type') beginsWith: 'text/event-stream').
 	"Drain the response to allow clean close"
@@ -213,6 +217,7 @@ ClaudeIntegrationTest >> testRealStreamingErrorHandling [
 	params model: 'claude-sonnet-4-6'.
 	params maxTokens: 50.
 	params addUserMessage: 'Hello'.
+	ClaudeTestLog log: '>> streaming with invalid key, expecting ClaudeApiError'.
 	self
 		should: [ badClient streamMessage: params do: [ :e | ] ]
 		raise: ClaudeApiError
@@ -248,6 +253,7 @@ ClaudeIntegrationTest >> testRealStreamingEvents [
 		events add: (event at: 'event').
 		message accumulate: event ].
 	sock close.
+	ClaudeTestLog log: '<< real streaming: ' , events size printString , ' events, ' , message textContent size printString , ' chars'.
 	self deny: message textContent isEmpty.
 	self assert: message stopReason equals: #end_turn.
 	self assert: (events includes: 'message_start').
@@ -272,6 +278,7 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 	events := OrderedCollection new.
 	message := client streamMessage: params do: [ :event |
 		events add: (event at: 'event') ].
+	ClaudeTestLog log: '<< client streaming: ' , events size printString , ' events, ' , message textContent size printString , ' chars'.
 	self deny: message textContent isEmpty.
 	self assert: message stopReason equals: #end_turn.
 	self assert: (events includes: 'message_start').
