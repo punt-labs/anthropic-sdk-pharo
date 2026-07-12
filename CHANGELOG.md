@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-12
+
 ### Added
 
 - **`make check-baseline` cold-load guard + CI `baseline` job.**
@@ -39,8 +41,10 @@ to [Semantic Versioning](https://semver.org/).
   `ClaudeMessagingBatchesExampleTest` cover the build helper shape,
   Haiku/maxTokens choice, JSON wire round-trip, and selector
   presence.
-- **Batches API** (`Claude-Messaging-Batches`): the Anthropic Message
-  Batches surface for async submission and JSONL results retrieval.
+- **Batches API** (`Claude-Messaging-Batches`; the API itself first
+  shipped in the `v0.6.0` tag — this entry documents it now that the
+  changelog is being finalized): the Anthropic Message Batches surface
+  for async submission and JSONL results retrieval.
   - `ClaudeClient` extension methods (per ADR-42, in
     `*Claude-Messaging-Batches`): `createBatch:`, `getBatch:`,
     `listBatches`, `listBatches:`, `cancelBatch:`, `deleteBatch:`,
