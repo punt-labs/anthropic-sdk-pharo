@@ -131,3 +131,22 @@ jobs:
             exit 1
           fi
           echo "test: 0 failures, 0 errors"
+
+  # Cold Metacello baseline load in a FRESH image where the SDK is not
+  # already present — the guard that catches a broken <baseline> pragma
+  # (e.g. baseline:/projectClass defined class-side instead of instance-side,
+  # the regression fixed in 5846b46). `make setup` loads packages via
+  # TonelReader directly and never exercises the Metacello baseline, so this
+  # is the only gate that resolves the <baseline> pragma. Lighter than the
+  # `test` job: it needs only the VM plus a throwaway image, no SDK preload.
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Cold baseline load (make check-baseline)
+        run: make check-baseline

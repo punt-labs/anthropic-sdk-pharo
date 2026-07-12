@@ -42,7 +42,7 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
 LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
-.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift sync-ref check check-packages transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -388,6 +388,53 @@ check-packages:
 		UNREACHABLE) echo "  FAIL eval server not responding"; exit 1 ;; \
 		*) echo "  FAIL unexpected: $$RESULT"; exit 1 ;; \
 	esac
+
+# check-baseline proves a COLD `Metacello baseline: 'ClaudeSDK'` load
+# resolves in a FRESH image where the SDK is NOT already present. This is
+# the guard that would have caught the class-side <baseline> pragma
+# regression (commit 5846b46): `make setup`/`make filein` load packages via
+# TonelReader directly and never exercise the Metacello baseline, so a broken
+# baseline (e.g. `baseline:`/`projectClass` defined class-side instead of
+# instance-side) passes every other gate. Only a cold Metacello load —
+# which resolves the <baseline> pragma via a fresh BaselineOfClaudeSDK
+# instance — exercises that path.
+#
+# Self-contained: downloads its OWN throwaway stock image into
+# .tmp/baseline-check (NEVER the SDK-loaded pharo/Pharo.image) and reuses the
+# VM downloaded by `$(VM)`. Order-independent — does not care whether `setup`
+# has already mutated pharo/Pharo.image. Fails loudly on "No #baseline pragma
+# found" or any load error.
+BASELINE_IMG_DIR := $(CURDIR)/.tmp/baseline-check
+BASELINE_IMG := $(BASELINE_IMG_DIR)/Pharo.image
+
+check-baseline: $(VM)
+	@echo ">> Cold Metacello baseline load in a throwaway fresh image..."
+	@rm -rf $(BASELINE_IMG_DIR)
+	@mkdir -p $(BASELINE_IMG_DIR)
+	@cd $(BASELINE_IMG_DIR) && curl -fsSL http://files.pharo.org/get-files/$(PHARO_VERSION)/pharoImage-x86_64.zip -o image.zip \
+		&& unzip -oq image.zip \
+		&& mv Pharo*.image Pharo.image \
+		&& mv Pharo*.changes Pharo.changes \
+		&& rm -f image.zip
+	@$(IMAGE_DIR)/pharo-vm/pharo --headless $(BASELINE_IMG) eval \
+		"[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; load ] \
+			on: Error \
+			do: [ :e | Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ', e messageText; lf; flush. Smalltalk exitFailure ]. \
+		(Smalltalk globals includesKey: #ClaudeClient) \
+			ifTrue: [ Stdio stdout nextPutAll: 'BASELINE-CHECK OK'; lf; flush. Smalltalk exitSuccess ] \
+			ifFalse: [ Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ClaudeClient absent after load'; lf; flush. Smalltalk exitFailure ]" \
+		2>&1 | tee $(BASELINE_IMG_DIR)/baseline-check.log
+	@# Verdict is read from the log sentinels, not $$? — `| tee` masks the VM
+	@# exit code under make's default /bin/sh (dash has no PIPESTATUS). A caught
+	@# pragma error prints "BASELINE-CHECK FAIL: No #baseline pragma found", so
+	@# the pragma-specific check below fires first with the actionable message.
+	@if grep -q 'No #baseline pragma found' $(BASELINE_IMG_DIR)/baseline-check.log; then \
+		echo "  FAIL <baseline> pragma not resolved — baseline:/projectClass must be instance-side"; exit 1; fi
+	@if grep -q 'BASELINE-CHECK FAIL' $(BASELINE_IMG_DIR)/baseline-check.log; then \
+		echo "  FAIL cold baseline load reported failure (see above)"; exit 1; fi
+	@if ! grep -q 'BASELINE-CHECK OK' $(BASELINE_IMG_DIR)/baseline-check.log; then \
+		echo "  FAIL no success sentinel — cold load crashed or did not complete"; exit 1; fi
+	@echo "  ok Cold baseline load resolved the <baseline> pragma and loaded all packages"
 
 transcript:
 	@$(CURL) -d "Transcript contents" || echo "Error: is the server running? (make start)"
