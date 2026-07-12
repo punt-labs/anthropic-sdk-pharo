@@ -30,7 +30,7 @@ Class {
 }
 
 { #category : 'baselines' }
-BaselineOfClaudeSDK class >> baseline: spec [
+BaselineOfClaudeSDK >> baseline: spec [
 	<baseline>
 	spec
 		for: #common
@@ -113,6 +113,6 @@ BaselineOfClaudeSDK class >> baseline: spec [
 ]
 
 { #category : 'accessing' }
-BaselineOfClaudeSDK class >> projectClass [
+BaselineOfClaudeSDK >> projectClass [
 	^ MetacelloCypressBaselineProject
 ]
