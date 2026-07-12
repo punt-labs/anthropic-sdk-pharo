@@ -13,6 +13,7 @@
 #   make test       — run Messaging SDK tests (ClaudeMessagingTestSuite)
 #   make lint       — lint all SDK classes
 #   make lint-md    — markdownlint all **/*.md (mirrors the docs CI gate)
+#   make sync-ref   — reattach Iceberg working copy reference commit to HEAD
 #   make check      — verify all packages loaded + Iceberg working copy clean
 #   make drift      — compare in-image methods vs on-disk Tonel
 #   make status     — health check
@@ -41,7 +42,7 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
 LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
-.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift check check-packages transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift sync-ref check check-packages transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -125,6 +126,7 @@ filein:
 	@echo ">> Reloading Tonel packages..."
 	@$(CURL) -d "$(LOAD_PACKAGES_EXPR)"
 	@echo ""
+	@$(MAKE) sync-ref
 
 eval:
 	@if [ -t 0 ]; then echo "Type Smalltalk, Ctrl-D to send:"; fi
@@ -318,7 +320,38 @@ drift:
 		*) echo "  FAIL drift detected ($$DRIFT classes)"; exit 1 ;; \
 	esac
 
-check: check-packages lint
+# Reattach the running image's Iceberg working copy to the current git HEAD.
+# CLI-side git ops (branch switch, commit, merge) move HEAD, but the image's
+# working copy does NOT auto-follow — it enters a "Detached Working Copy" state,
+# so any reference-commit-relative probe (see `check`) measures against a stale
+# commit. This is the reconciliation the Iceberg UI's "Sync reference commit"
+# button performs: set referenceCommit to HEAD, which reattaches the copy.
+# It re-baselines the reference ONLY — genuinely uncommitted in-image method
+# edits still show as diffs, so `check` still catches them.
+sync-ref:
+	@echo ">> Syncing Iceberg reference commit to HEAD..."
+	@RESULT=$$($(CURL) -d \
+		"| repo | \
+		repo := IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ nil ]. \
+		repo ifNil: [ 'ERROR: no repo registered' ] ifNotNil: [ \
+			repo workingCopy referenceCommit: repo head commit. \
+			'SYNCED detached=', repo workingCopy isDetached printString ]" \
+		2>/dev/null) || RESULT="UNREACHABLE"; \
+	case "$$RESULT" in \
+		*"SYNCED detached=false"*) echo "  ok Iceberg reference commit synced to HEAD" ;; \
+		*"SYNCED detached=true"*) echo "  FAIL still detached after sync: $$RESULT"; exit 1 ;; \
+		*ERROR*) echo "  FAIL repo not registered: $$RESULT"; exit 1 ;; \
+		UNREACHABLE) echo "  FAIL eval server not responding"; exit 1 ;; \
+		*) echo "  FAIL unexpected: $$RESULT"; exit 1 ;; \
+	esac
+
+# sync-ref is a prerequisite of check (alongside check-packages and lint), so
+# the reference commit is reattached to HEAD before this recipe's workingCopyDiff
+# probe runs. This relies on recipes executing only after all prerequisites
+# complete — not on prerequisite ordering — so it holds even under parallel make
+# (-j). check-packages and lint don't consult the reference commit; only the
+# probe below does.
+check: check-packages lint sync-ref
 	@RESULT=$$($(CURL) -d \
 		"| repo diff | \
 		repo := IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ nil ]. \
