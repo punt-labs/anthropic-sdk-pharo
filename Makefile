@@ -345,10 +345,12 @@ sync-ref:
 		*) echo "  FAIL unexpected: $$RESULT"; exit 1 ;; \
 	esac
 
-# sync-ref runs first (prerequisite), so the workingCopyDiff probe below
-# measures against the actual HEAD, not a stale reference commit. The recipe
-# executes only after all prerequisites complete, so this ordering holds even
-# under parallel make (-j).
+# sync-ref is a prerequisite of check (alongside check-packages and lint), so
+# the reference commit is reattached to HEAD before this recipe's workingCopyDiff
+# probe runs. This relies on recipes executing only after all prerequisites
+# complete — not on prerequisite ordering — so it holds even under parallel make
+# (-j). check-packages and lint don't consult the reference commit; only the
+# probe below does.
 check: check-packages lint sync-ref
 	@RESULT=$$($(CURL) -d \
 		"| repo diff | \
