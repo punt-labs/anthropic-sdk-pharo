@@ -64,7 +64,9 @@ ClaudeGetModelIntegrationTest >> testGetModelReturnsModelInfoForKnownId [
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	modelId := ClaudeModel sonnet46.
+	ClaudeTestLog log: '>> getModel ' , modelId printString.
 	info := client getModel: modelId.
+	ClaudeTestLog log: '<< displayName=' , info displayName printString , ' type=' , info type printString.
 	self
 		assert: (info isKindOf: ClaudeModelInfo)
 		description: 'getModel: must return a ClaudeModelInfo; got ' , info class name.

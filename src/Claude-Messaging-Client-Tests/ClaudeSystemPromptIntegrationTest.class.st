@@ -82,6 +82,7 @@ ClaudeSystemPromptIntegrationTest >> testSystemPromptConstraintsResponseAgainstA
 		on: Error do: [ :e | ^ self skip ].
 	response := ClaudeMessagingSystemPromptExample runOn: client.
 	text := response textContent.
+	ClaudeTestLog log: '<< markerPresent=' , (text includesSubstring: 'MKR-%%%') printString.
 	self
 		assert: response stopReason = #end_turn
 		description: 'server must complete generation cleanly (stopReason = #end_turn)'.

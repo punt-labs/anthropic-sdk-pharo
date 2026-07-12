@@ -48,7 +48,9 @@ ClaudeFileIntegrationTest >> tearDown [
 { #category : 'tests-integration' }
 ClaudeFileIntegrationTest >> testListFiles [
 	| page |
+	ClaudeTestLog log: '>> listFiles'.
 	page := client listFiles.
+	ClaudeTestLog log: '<< listFiles returned ' , page data size printString , ' file(s)'.
 	self assert: page class equals: ClaudeFilePage.
 	self assert: page data isCollection
 ]
@@ -56,7 +58,9 @@ ClaudeFileIntegrationTest >> testListFiles [
 { #category : 'tests-integration' }
 ClaudeFileIntegrationTest >> testListFilesWithPagination [
 	| page |
+	ClaudeTestLog log: '>> listFiles limit: 1'.
 	page := client listFiles: (ClaudeFileListParams new limit: 1).
+	ClaudeTestLog log: '<< returned ' , page data size printString , ' file(s)'.
 	self assert: page class equals: ClaudeFilePage.
 	self assert: page data size <= 1
 ]
@@ -66,14 +70,19 @@ ClaudeFileIntegrationTest >> testUploadAndGetMetadata [
 	| file metadata retrieved |
 	file := FileSystem memory / 'test.txt'.
 	file writeStreamDo: [:s | s nextPutAll: 'Hello from Pharo'].
+	ClaudeTestLog log: '>> uploadFile test.txt'.
 	metadata := client uploadFile: file filename: 'test.txt' mimeType: 'text/plain'.
+	ClaudeTestLog log: '<< uploaded id=' , metadata id printString.
 	self assert: metadata class equals: ClaudeFileMetadata.
 	self assert: metadata filename equals: 'test.txt'.
 	self assert: metadata mimeType equals: 'text/plain'.
 	self assert: metadata id isNotNil.
+	ClaudeTestLog log: '>> getFileMetadata ' , metadata id printString.
 	retrieved := client getFileMetadata: metadata id.
+	ClaudeTestLog log: '<< metadata round-trip matched=' , (retrieved id = metadata id) printString.
 	self assert: retrieved id equals: metadata id.
 	"Cleanup"
+	ClaudeTestLog log: '>> cleanup: deleteFile ' , metadata id printString.
 	client deleteFile: metadata id
 ]
 
@@ -82,7 +91,9 @@ ClaudeFileIntegrationTest >> testUploadDownloadDelete [
 	| file metadata deleted |
 	file := FileSystem memory / 'download-test.txt'.
 	file writeStreamDo: [:s | s nextPutAll: 'Download me'].
+	ClaudeTestLog log: '>> uploadFile download-test.txt'.
 	metadata := client uploadFile: file filename: 'download-test.txt' mimeType: 'text/plain'.
+	ClaudeTestLog log: '<< uploaded id=' , metadata id printString , ' downloadable=' , metadata downloadable printString.
 	self assert: metadata class equals: ClaudeFileMetadata.
 	self assert: metadata id isNotNil.
 	"Files may not be immediately downloadable (API processing delay).
@@ -93,7 +104,9 @@ ClaudeFileIntegrationTest >> testUploadDownloadDelete [
 		self assert: content isNotNil.
 		self assert: content class equals: ByteArray.
 		self assert: content utf8Decoded equals: 'Download me' ].
+	ClaudeTestLog log: '>> cleanup: deleteFile ' , metadata id printString.
 	deleted := client deleteFile: metadata id.
+	ClaudeTestLog log: '<< deleted id=' , deleted id printString.
 	self assert: deleted class equals: ClaudeDeletedFile.
 	self assert: deleted id equals: metadata id
 ]
@@ -135,11 +148,13 @@ ClaudeFileIntegrationTest >> testUploadStreamsLargeFileWithBoundedMemory [
             remaining := remaining - chunkSize].
         remaining > 0 ifTrue: [
             s nextPutAll: (chunk copyFrom: 1 to: remaining)]].
+    ClaudeTestLog log: '>> streaming upload of ' , nBytes printString , ' bytes'.
     [ metadata := client
         uploadFile: tempFile
         filename: 'streaming-multipart-10mb.bin'
         mimeType: 'application/octet-stream'.
       self assert: metadata class equals: ClaudeFileMetadata.
+      ClaudeTestLog log: '<< server echoed sizeBytes=' , metadata sizeBytes printString.
       self assert: metadata sizeBytes equals: tempFile size.
       self assert: metadata id isNotNil
     ] ensure: [

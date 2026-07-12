@@ -94,7 +94,9 @@ ClaudeImageIntegrationTest >> testImageInputProcessedAgainstAnthropic [
 	| client response |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> image input request'.
 	response := ClaudeMessagingImageExample runOn: client.
+	ClaudeTestLog log: '<< stopReason=' , response stopReason printString , ' inputTokens=' , response usage inputTokens printString.
 	self
 		assert: response stopReason = #end_turn
 		description: 'server must complete response cleanly (stopReason #end_turn); got ' , response stopReason printString.

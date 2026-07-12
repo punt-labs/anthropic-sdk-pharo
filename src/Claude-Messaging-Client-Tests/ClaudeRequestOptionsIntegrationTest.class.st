@@ -64,7 +64,9 @@ ClaudeRequestOptionsIntegrationTest >> testRequestOptionsFieldsClearServerValida
 	| client response |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> requestOptions (metadata + serviceTier)'.
 	response := ClaudeMessagingRequestOptionsExample runOn: client.
+	ClaudeTestLog log: '<< stopReason=' , response stopReason printString , ' inputTokens=' , response usage inputTokens printString.
 	self
 		assert: response stopReason = #end_turn
 		description: 'server must accept metadata + serviceTier and complete cleanly (stopReason = #end_turn)'.

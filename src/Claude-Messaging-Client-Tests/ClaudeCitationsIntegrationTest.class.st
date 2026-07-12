@@ -92,6 +92,7 @@ ClaudeCitationsIntegrationTest >> testCitationsReturnedAgainstAnthropic [
 	| client response textBlocksWithCitations firstCitation |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> citations-enabled request'.
 	response := ClaudeMessagingCitationsExample runOn: client.
 	textBlocksWithCitations := response content select: [ :b |
 		b isTextBlock
@@ -100,6 +101,7 @@ ClaudeCitationsIntegrationTest >> testCitationsReturnedAgainstAnthropic [
 	self
 		assert: textBlocksWithCitations isNotEmpty
 		description: 'response must contain at least one text block with server-generated citations'.
+	ClaudeTestLog log: '<< ' , textBlocksWithCitations size printString , ' text block(s) with citations'.
 	firstCitation := textBlocksWithCitations first citations first.
 	"Server-extracted excerpt from our input document."
 	self

@@ -74,6 +74,7 @@ ClaudeOutputFormatIntegrationTest >> testJsonSchemaOutputFormatProducesConformin
 		assert: text isNotEmpty
 		description: 'response must carry non-empty text content'.
 	parsed := STONJSON fromString: text.
+	ClaudeTestLog log: '<< parsed JSON keys=' , parsed keys asArray printString.
 	name := parsed at: 'name' ifAbsent: [ nil ].
 	age := parsed at: 'age' ifAbsent: [ nil ].
 	self

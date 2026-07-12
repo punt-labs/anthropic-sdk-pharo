@@ -171,6 +171,7 @@ ClaudeIntegrationTest >> testRealStreamingClose [
 	sock readHeaders.
 	decoder := ClaudeSSEDecoder onStream: sock.
 	[ decoder hasNext ] whileTrue: [ decoder nextEvent ].
+	ClaudeTestLog log: '<< stream drained; closing socket'.
 	sock close.
 	self deny: sock isConnected
 ]
@@ -197,6 +198,7 @@ ClaudeIntegrationTest >> testRealStreamingConnection [
 		} asDictionary).
 	statusCode := sock readStatusLine.
 	headers := sock readHeaders.
+	ClaudeTestLog log: '<< streaming connect status=' , statusCode printString.
 	self assert: statusCode equals: 200.
 	self assert: ((headers at: 'content-type') beginsWith: 'text/event-stream').
 	"Drain the response to allow clean close"
@@ -215,6 +217,7 @@ ClaudeIntegrationTest >> testRealStreamingErrorHandling [
 	params model: 'claude-sonnet-4-6'.
 	params maxTokens: 50.
 	params addUserMessage: 'Hello'.
+	ClaudeTestLog log: '>> streaming with invalid key, expecting ClaudeApiError'.
 	self
 		should: [ badClient streamMessage: params do: [ :e | ] ]
 		raise: ClaudeApiError
@@ -250,6 +253,7 @@ ClaudeIntegrationTest >> testRealStreamingEvents [
 		events add: (event at: 'event').
 		message accumulate: event ].
 	sock close.
+	ClaudeTestLog log: '<< real streaming: ' , events size printString , ' events, ' , message textContent size printString , ' chars'.
 	self deny: message textContent isEmpty.
 	self assert: message stopReason equals: #end_turn.
 	self assert: (events includes: 'message_start').
@@ -274,6 +278,7 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 	events := OrderedCollection new.
 	message := client streamMessage: params do: [ :event |
 		events add: (event at: 'event') ].
+	ClaudeTestLog log: '<< client streaming: ' , events size printString , ' events, ' , message textContent size printString , ' chars'.
 	self deny: message textContent isEmpty.
 	self assert: message stopReason equals: #end_turn.
 	self assert: (events includes: 'message_start').

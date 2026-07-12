@@ -74,7 +74,9 @@ ClaudeRawStreamingIntegrationTest >> testRawStreamingExampleRoundTripsAgainstAnt
     | client response |
     client := [ ClaudeSDKExampleSupport resolveClient ]
         on: Error do: [ :e | ^ self skip ].
+    ClaudeTestLog log: '>> raw streaming example round-trip'.
     response := ClaudeMessagingRawStreamingExample runOn: client.
+    ClaudeTestLog log: '<< stopReason=' , response stopReason printString , ' text=' , response textContent size printString , ' chars'.
     self
         assert: (response isKindOf: ClaudeMessage)
         description: 'runOn: must return a ClaudeMessage, not a lower-level value'.

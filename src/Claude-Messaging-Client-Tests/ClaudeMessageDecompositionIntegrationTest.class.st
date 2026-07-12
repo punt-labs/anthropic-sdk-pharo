@@ -78,6 +78,7 @@ ClaudeMessageDecompositionIntegrationTest >> testRequestIdSurvivesRoundTrip [
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	response := client sendMessage: self buildSimpleRequest.
+	ClaudeTestLog log: '<< requestId=' , response requestId printString.
 	self
 		assert: response responseMetadata isNotNil
 		description: 'response must have a ClaudeResponseMetadata attached'.
@@ -106,6 +107,7 @@ ClaudeMessageDecompositionIntegrationTest >> testStopDetailsPopulatedOnNormalEnd
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
 	response := client sendMessage: self buildSimpleRequest.
+	ClaudeTestLog log: '<< stopReason=' , response stopDetails stopReason printString , ' category=' , response stopDetails category printString.
 	self
 		assert: response stopDetails isNotNil
 		description: 'response must have ClaudeStopDetails attached'.

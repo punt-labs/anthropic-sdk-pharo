@@ -92,8 +92,10 @@ ClaudeThinkingIntegrationTest >> testThinkingBlockReturnedAgainstAnthropic [
 	| client response thinkingBlocks first |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> thinking-enabled request'.
 	response := ClaudeMessagingThinkingExample runOn: client.
 	thinkingBlocks := response content select: [ :b | b isThinkingBlock ].
+	ClaudeTestLog log: '<< ' , thinkingBlocks size printString , ' thinking block(s)'.
 	self
 		assert: thinkingBlocks isNotEmpty
 		description: 'response must contain at least one server-generated thinking block'.

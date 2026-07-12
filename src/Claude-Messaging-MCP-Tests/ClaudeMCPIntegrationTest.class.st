@@ -93,7 +93,9 @@ ClaudeMCPIntegrationTest >> testMCPConnectorRoundTripsAgainstAnthropic [
 	| client response mcpToolUseBlocks mcpToolResultBlocks resultBlock resultContent |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> MCP connector round-trip (deepwiki)'.
 	response := ClaudeMessagingMCPExample runOn: client.
+	ClaudeTestLog log: '<< response blocks=' , response content size printString , ' stopReason=' , response stopReason printString.
 
 	mcpToolUseBlocks := response content select: [ :b | b isMCPToolUseBlock ].
 	self
@@ -104,7 +106,9 @@ ClaudeMCPIntegrationTest >> testMCPConnectorRoundTripsAgainstAnthropic [
 		assert: mcpToolUseBlocks first serverName = 'deepwiki'
 		description: 'Anthropic must echo the server name from the mcpServers list (structural round-trip)'.
 
+	ClaudeTestLog log: '   mcp_tool_use blocks=' , mcpToolUseBlocks size printString.
 	mcpToolResultBlocks := response content select: [ :b | b isMCPToolResultBlock ].
+	ClaudeTestLog log: '   mcp_tool_result blocks=' , mcpToolResultBlocks size printString.
 	self
 		assert: mcpToolResultBlocks isNotEmpty
 		description: 'response must contain at least one mcp_tool_result block from the external MCP server'.
@@ -150,12 +154,14 @@ ClaudeMCPIntegrationTest >> testMCPToolResultBlockContentUnionAgainstAnthropic [
 	| client response resultBlocks content |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
+	ClaudeTestLog log: '>> MCP content-union round-trip'.
 	response := ClaudeMessagingMCPExample runOn: client.
 	resultBlocks := response content select: [ :b | b isMCPToolResultBlock ].
 	self
 		assert: resultBlocks isNotEmpty
 		description: 'server must return at least one mcp_tool_result block'.
 	content := resultBlocks first content.
+	ClaudeTestLog log: '<< result content class=' , content class name.
 	self
 		assert: (content isString
 			or: [ content isCollection
