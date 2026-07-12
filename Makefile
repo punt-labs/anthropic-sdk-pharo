@@ -423,7 +423,9 @@ check-baseline: $(VM)
 		&& mv Pharo*.changes Pharo.changes \
 		&& rm -f image.zip
 	@$(IMAGE_DIR)/pharo-vm/pharo --headless $(BASELINE_IMG) eval \
-		"[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; load ] \
+		"(Smalltalk globals includesKey: #ClaudeClient) \
+			ifTrue: [ Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ClaudeClient present before load (not a cold image)'; lf; flush. Smalltalk exitFailure ]. \
+		[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; load ] \
 			on: Error \
 			do: [ :e | Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ', e messageText; lf; flush. Smalltalk exitFailure ]. \
 		(Smalltalk globals includesKey: #ClaudeClient) \
