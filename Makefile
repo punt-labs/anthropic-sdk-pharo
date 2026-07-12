@@ -54,9 +54,15 @@ $(VM): | $(IMAGE_DIR)
 	cd $(IMAGE_DIR) && curl -fsSL https://get.pharo.org/64/$(PHARO_VERSION)+vm | bash
 	@echo "  ok Pharo downloaded"
 
+# HTTPS (not plaintext HTTP) for the image download: the zip is unzipped and
+# executed as a VM image, so a MITM on plaintext HTTP could substitute a
+# malicious image (arbitrary code execution). HTTPS gives transport
+# authenticity. Checksum pinning is infeasible here — files.pharo.org
+# /get-files serves a rolling "latest" image per version (no stable hash) and
+# publishes no .sha256 sidecar, so there is no upstream-published digest to pin.
 $(IMAGE): $(VM)
 	@echo ">> Downloading fresh Pharo $(PHARO_VERSION) image..."
-	cd $(IMAGE_DIR) && curl -fsSL http://files.pharo.org/get-files/$(PHARO_VERSION)/pharoImage-x86_64.zip -o image.zip \
+	cd $(IMAGE_DIR) && curl -fsSL https://files.pharo.org/get-files/$(PHARO_VERSION)/pharoImage-x86_64.zip -o image.zip \
 		&& rm -f Pharo.image Pharo.changes \
 		&& unzip -o image.zip \
 		&& mv Pharo*.image Pharo.image \
@@ -411,7 +417,7 @@ check-baseline: $(VM)
 	@echo ">> Cold Metacello baseline load in a throwaway fresh image..."
 	@rm -rf $(BASELINE_IMG_DIR)
 	@mkdir -p $(BASELINE_IMG_DIR)
-	@cd $(BASELINE_IMG_DIR) && curl -fsSL http://files.pharo.org/get-files/$(PHARO_VERSION)/pharoImage-x86_64.zip -o image.zip \
+	@cd $(BASELINE_IMG_DIR) && curl -fsSL https://files.pharo.org/get-files/$(PHARO_VERSION)/pharoImage-x86_64.zip -o image.zip \
 		&& unzip -oq image.zip \
 		&& mv Pharo*.image Pharo.image \
 		&& mv Pharo*.changes Pharo.changes \
