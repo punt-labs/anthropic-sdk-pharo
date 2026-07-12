@@ -55,9 +55,10 @@ ClaudeTestLog class >> activityLogger [
 	driven by any runner (Dr Tests GUI, TestCase>>run, make test-full) — lands in the
 	shared file. Started exactly once; repeated sends return the same running logger."
 	^ ActivityLogger ifNil: [
-		ActivityLogger := ClaudeFileSignalLogger onFile: self activityLogFile.
-		ActivityLogger start.
-		ActivityLogger ]
+		| logger |
+		logger := ClaudeFileSignalLogger onFile: self activityLogFile.
+		logger start.
+		ActivityLogger := logger ]
 ]
 
 { #category : 'activity logging' }

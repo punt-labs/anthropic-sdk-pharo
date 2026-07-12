@@ -63,8 +63,8 @@ ClaudeClientRetryIntegrationTest >> setUp [
 
 { #category : 'running' }
 ClaudeClientRetryIntegrationTest >> tearDown [
-	ClaudeTestLog endActivityFor: self selector.
-	mockServer stop.
+	[ ClaudeTestLog endActivityFor: self selector ]
+		ensure: [ mockServer ifNotNil: [ :s | s stop ] ].
 	super tearDown
 ]
 
