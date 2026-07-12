@@ -142,8 +142,8 @@ request betas: { ClaudeBetaHeader mcpClient }.
 ## Development
 
 ```bash
-git clone git@github.com:punt-labs/anthropic-sdk-pharo.git claude-messaging-pharo
-cd claude-messaging-pharo
+git clone git@github.com:punt-labs/anthropic-sdk-pharo.git anthropic-sdk-pharo
+cd anthropic-sdk-pharo
 make setup   # download Pharo 12 + load packages
 make start   # start eval server on port 8422
 make test    # run test suite
