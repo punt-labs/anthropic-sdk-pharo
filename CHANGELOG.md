@@ -9,6 +9,12 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`make check-baseline` cold-load guard + CI `baseline` job.**
+  A fresh-image `Metacello baseline: 'ClaudeSDK'; load` that fails
+  on "No #baseline pragma found" or any load error, so the baseline
+  stays cold-loadable by external consumers and this class of gap
+  cannot silently regress.
+
 - **`pass` keyring backend** (`LinuxPassToolBackend`): `PharoKeyring`
   resolves API keys from the `pass`(1) password store on Linux,
   preferred over `secret-tool` when both are installed (selected once
@@ -101,6 +107,15 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Metacello baseline load now resolves.**
+  `BaselineOfClaudeSDK>>baseline:` and `>>projectClass` are now
+  instance-side (they had been class-side), so a cold
+  `Metacello new baseline: 'ClaudeSDK'; repository: '...'; load`
+  finds the `<baseline>` pragma and loads. External consumers'
+  cold loads previously failed with "No #baseline pragma found" —
+  our CI loaded packages via `TonelReader` and never exercised
+  `Metacello baseline:`, so the baseline path went untested.
+
 - **`make lint` now lints class-side methods and method-level rules.**
   The Makefile gate had been calling `(ReCriticEngine critiquesOf:
   cls)` once per class, which evaluates only class-level rules on
@@ -116,6 +131,14 @@ to [Semantic Versioning](https://semver.org/).
   on empty match and propagated through the pipeline; appending
   `|| true` to the second grep and removing the trailing fallback
   echo restores correct exit semantics.
+
+### Security
+
+- **Pharo image downloaded over HTTPS** (was plaintext HTTP) in the
+  Makefile `setup` and `check-baseline` image fetches, preventing
+  image substitution via a network MITM. Checksum pinning is not
+  feasible — upstream serves a rolling image per version with no
+  published digest — so HTTPS provides the transport authenticity.
 
 ## [0.5.0] - 2026-04-25
 
