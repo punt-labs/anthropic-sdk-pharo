@@ -55,6 +55,7 @@ ClaudeClientRetryIntegrationTest >> newParams [
 { #category : 'running' }
 ClaudeClientRetryIntegrationTest >> setUp [
 	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
 	mockServer := ClaudeMockServer startOn: 0.
 	client := ClaudeClient apiKey: 'test-key' baseUrl: 'http://localhost:', mockServer port printString timeout: 5.
 	client maxRetries: 2
@@ -62,6 +63,7 @@ ClaudeClientRetryIntegrationTest >> setUp [
 
 { #category : 'running' }
 ClaudeClientRetryIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
 	mockServer stop.
 	super tearDown
 ]

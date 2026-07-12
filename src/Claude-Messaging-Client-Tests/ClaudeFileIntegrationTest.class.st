@@ -34,8 +34,15 @@ ClaudeFileIntegrationTest >> setUp [
 	cleanly when no key is available so a key-less image (CI fork PR, fresh dev
 	box) does not red-fail the suite."
 	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
 	[ client := ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip: e messageText ]
+]
+
+{ #category : 'running' }
+ClaudeFileIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
 ]
 
 { #category : 'tests-integration' }

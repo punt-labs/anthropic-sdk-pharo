@@ -65,17 +65,19 @@ ClaudeIntegrationTest >> setUp [
 	the documented marker below for the no-key case; we match on that marker and re-raise anything
 	else. The skip reason carries the original cause so the absence is visible in the run output."
 	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
 	[ client := ClaudeSDKExampleSupport resolveClient ]
 		on: Error
 		do: [ :e |
 			(e messageText notNil and: [ e messageText beginsWith: 'No Anthropic API key found' ])
 				ifTrue: [ ^ self skip: e messageText ]
-				ifFalse: [ e pass ] ].
-	Transcript
-		nextPutAll: '=== ';
-		nextPutAll: self selector;
-		nextPutAll: ' ===';
-		cr
+				ifFalse: [ e pass ] ]
+]
+
+{ #category : 'running' }
+ClaudeIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
 ]
 
 { #category : 'tests-integration' }

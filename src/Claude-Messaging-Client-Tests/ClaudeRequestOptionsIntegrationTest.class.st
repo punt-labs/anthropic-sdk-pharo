@@ -33,6 +33,18 @@ ClaudeRequestOptionsIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeRequestOptionsIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeRequestOptionsIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeRequestOptionsIntegrationTest >> testRequestOptionsFieldsClearServerValidationAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with both

@@ -63,6 +63,18 @@ ClaudePDFIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudePDFIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudePDFIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudePDFIntegrationTest >> testPDFInputProcessedAgainstAnthropic [
 	"Drive a sendMessage: call with a base64-inline PDF document against

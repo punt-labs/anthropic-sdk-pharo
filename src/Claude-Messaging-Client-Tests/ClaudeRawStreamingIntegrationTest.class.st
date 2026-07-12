@@ -48,6 +48,18 @@ ClaudeRawStreamingIntegrationTest >> defaultTimeLimit [
     ^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeRawStreamingIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeRawStreamingIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeRawStreamingIntegrationTest >> testRawStreamingExampleRoundTripsAgainstAnthropic [
     "Exercise ClaudeMessagingRawStreamingExample>>runOn: end-to-end against

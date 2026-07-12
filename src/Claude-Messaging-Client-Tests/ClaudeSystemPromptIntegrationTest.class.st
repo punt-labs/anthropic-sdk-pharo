@@ -57,6 +57,18 @@ ClaudeSystemPromptIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeSystemPromptIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeSystemPromptIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeSystemPromptIntegrationTest >> testSystemPromptConstraintsResponseAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with a

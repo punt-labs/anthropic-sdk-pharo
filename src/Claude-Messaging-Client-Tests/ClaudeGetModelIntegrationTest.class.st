@@ -33,6 +33,18 @@ ClaudeGetModelIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeGetModelIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeGetModelIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeGetModelIntegrationTest >> testGetModelReturnsModelInfoForKnownId [
 	"Drive a live /v1/models/:id call via ClaudeClient>>getModel: and

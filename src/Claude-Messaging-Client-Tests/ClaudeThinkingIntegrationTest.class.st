@@ -65,6 +65,18 @@ ClaudeThinkingIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeThinkingIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeThinkingIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeThinkingIntegrationTest >> testThinkingBlockReturnedAgainstAnthropic [
 	"Drive a sendMessage: call with extended thinking enabled against

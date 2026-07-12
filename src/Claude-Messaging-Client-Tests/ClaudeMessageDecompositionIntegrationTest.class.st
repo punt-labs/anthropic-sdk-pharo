@@ -48,6 +48,18 @@ ClaudeMessageDecompositionIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeMessageDecompositionIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeMessageDecompositionIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeMessageDecompositionIntegrationTest >> testRequestIdSurvivesRoundTrip [
 	"Send a normal message request and assert the response carries a

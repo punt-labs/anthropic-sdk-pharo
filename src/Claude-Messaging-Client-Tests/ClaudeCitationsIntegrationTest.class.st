@@ -65,6 +65,18 @@ ClaudeCitationsIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeCitationsIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeCitationsIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeCitationsIntegrationTest >> testCitationsReturnedAgainstAnthropic [
 	"Drive a sendMessage: call with a citations-enabled user document

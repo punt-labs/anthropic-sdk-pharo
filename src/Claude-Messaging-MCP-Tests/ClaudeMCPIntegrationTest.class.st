@@ -71,6 +71,18 @@ ClaudeMCPIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeMCPIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeMCPIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeMCPIntegrationTest >> testMCPConnectorRoundTripsAgainstAnthropic [
 	"Drive a full MCP connector round-trip against api.anthropic.com and

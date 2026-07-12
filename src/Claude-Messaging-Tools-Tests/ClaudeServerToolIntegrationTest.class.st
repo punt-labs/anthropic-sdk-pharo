@@ -138,12 +138,19 @@ ClaudeServerToolIntegrationTest >> defaultTimeLimit [
 
 { #category : 'running' }
 ClaudeServerToolIntegrationTest >> setUp [
-  "Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
-  cleanly when no key is available so a key-less image (CI fork PR, fresh dev
-  box) does not red-fail the suite."
-  super setUp.
-  [ client := ClaudeSDKExampleSupport resolveClient ]
-    on: Error do: [ :e | ^ self skip: e messageText ]
+	"Resolve a ClaudeClient via the shared keyring/env-var fallback chain. Skips
+	cleanly when no key is available so a key-less image (CI fork PR, fresh dev
+	box) does not red-fail the suite."
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector.
+	[ client := ClaudeSDKExampleSupport resolveClient ]
+		on: Error do: [ :e | ^ self skip: e messageText ]
+]
+
+{ #category : 'running' }
+ClaudeServerToolIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
 ]
 
 { #category : 'tests-integration' }

@@ -67,9 +67,6 @@ cleaned up by `uploadOn:displayTitle:` itself, so we do not track it here.
 Class {
 	#name : 'ClaudeSkillsIntegrationTest',
 	#superclass : 'TestCase',
-	#instVars : [
-		'activityLogger'
-	],
 	#category : 'Claude-Messaging-Skills-Tests',
 	#package : 'Claude-Messaging-Skills-Tests'
 }
@@ -89,15 +86,12 @@ ClaudeSkillsIntegrationTest class >> defaultTimeLimit [
 { #category : 'running' }
 ClaudeSkillsIntegrationTest >> setUp [
 	super setUp.
-	activityLogger := ClaudeFileSignalLogger onFile: ((FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory / 'skills-integration-activity.log').
-	activityLogger start.
-	ClaudeTestLog log: '=== ' , self selector , ' START ==='
+	ClaudeTestLog startActivityFor: self selector
 ]
 
 { #category : 'running' }
 ClaudeSkillsIntegrationTest >> tearDown [
-	ClaudeTestLog log: '=== ' , self selector , ' END ==='.
-	activityLogger ifNotNil: [ :l | l stop ].
+	ClaudeTestLog endActivityFor: self selector.
 	super tearDown
 ]
 

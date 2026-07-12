@@ -33,6 +33,18 @@ ClaudeOutputFormatIntegrationTest >> defaultTimeLimit [
 	^ 2 minutes
 ]
 
+{ #category : 'running' }
+ClaudeOutputFormatIntegrationTest >> setUp [
+	super setUp.
+	ClaudeTestLog startActivityFor: self selector
+]
+
+{ #category : 'running' }
+ClaudeOutputFormatIntegrationTest >> tearDown [
+	ClaudeTestLog endActivityFor: self selector.
+	super tearDown
+]
+
 { #category : 'tests-integration' }
 ClaudeOutputFormatIntegrationTest >> testJsonSchemaOutputFormatProducesConformingJsonAgainstAnthropic [
 	"Drive a live sendMessage: call against api.anthropic.com with a
