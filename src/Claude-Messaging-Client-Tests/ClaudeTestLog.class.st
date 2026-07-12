@@ -33,6 +33,7 @@ Class {
 	#name : 'ClaudeTestLog',
 	#superclass : 'Object',
 	#classVars : [
+		'ActivityLogFile',
 		'ActivityLogger'
 	],
 	#category : 'Claude-Messaging-Client-Tests',
@@ -43,9 +44,18 @@ Class {
 ClaudeTestLog class >> activityLogFile [
 	"The single durable file every integration test appends its activity to. All
 	Claude*IntegrationTest classes share this one path so a full integration run
-	leaves a single interleaved transcript on disk."
-	^ (FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
-		/ 'integration-activity.log'
+	leaves a single interleaved transcript on disk. A test may override the path with
+	activityLogFile: (default restored by passing nil); production callers use the default."
+	^ ActivityLogFile ifNil: [
+		(FileSystem disk workingDirectory / '.tmp') ensureCreateDirectory
+			/ 'integration-activity.log' ]
+]
+
+{ #category : 'activity logging' }
+ClaudeTestLog class >> activityLogFile: aFileReferenceOrNil [
+	"Testing seam: override the durable activity-log path. Pass nil to restore the default.
+	Production code never sends this; the default path is unchanged."
+	ActivityLogFile := aFileReferenceOrNil
 ]
 
 { #category : 'activity logging' }
@@ -71,6 +81,15 @@ ClaudeTestLog class >> endActivityFor: aSelector [
 { #category : 'logging' }
 ClaudeTestLog class >> log: aString [
 	^ ClaudeTestSignal emit: aString
+]
+
+{ #category : 'activity logging' }
+ClaudeTestLog class >> resetActivityLogger [
+	"Testing seam: stop the started-once singleton (unsubscribing it from Beacon) and drop it
+	so the next activityLogger send re-binds lazily to the current activityLogFile. Production
+	code never sends this; the always-on started-once semantics are unchanged for real runs."
+	ActivityLogger ifNotNil: [ :logger | logger stop ].
+	ActivityLogger := nil
 ]
 
 { #category : 'activity logging' }

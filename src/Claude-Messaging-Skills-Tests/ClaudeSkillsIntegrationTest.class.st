@@ -179,7 +179,7 @@ ClaudeSkillsIntegrationTest >> testSkillRoundTripAgainstAnthropic [
 		 The per-version handler narrows the swallow to ClaudeNotFoundError
 		 (a partial prior cleanup may have removed the resource already);
 		 any other ClaudeApiError is logged to Transcript so unexpected
-		 failures stay visible on triage. Pharo''s BlockClosure has only
+		 failures stay visible on triage. Pharo's BlockClosure has only
 		 #on:do: -- a chained on:do:on:do: does not exist -- so we
 		 dispatch by `e class` inside a single handler. The same
 		 discipline applies to the final deleteSkill:."
