@@ -53,8 +53,17 @@ Morphic presenters, or CLI plugins, it does not belong here.
   `Claude-Messaging-Types`.
 - **Skills API**: `ClaudeSkill`, `ClaudeSkillVersion`,
   `ClaudeDeletedSkill`, page types and list params.
+- **Batches API**: `ClaudeBatch`, `ClaudeBatchRequest`,
+  `ClaudeBatchCreateParams`, `ClaudeBatchListParams`,
+  `ClaudeBatchPage`, `ClaudeBatchRequestCounts`,
+  `ClaudeBatchResult` (Succeeded/Errored/Canceled/Expired
+  subclasses), `ClaudeDeletedBatch`. `ClaudeClient` extension
+  methods (`createBatch:`, `getBatch:`, `listBatches`,
+  `cancelBatch:`, `deleteBatch:`, `streamBatchResults:do:`,
+  `pollBatch:untilEndedEvery:`) run the Message Batches endpoints.
 - **Keyring**: `PharoKeyring` — cross-platform OS keyring wrapper.
-  Strategy pattern with `LinuxSecretToolBackend` and
+  Strategy pattern with `LinuxSecretToolBackend`,
+  `LinuxPassToolBackend` (the `pass` password store), and
   `MacOSSecurityBackend`. Used by `ClaudeSDKExampleSupport` for API
   key resolution.
 
@@ -92,6 +101,7 @@ SDK — plus the standalone PharoKeyring.
 | `Claude-Messaging-Files` | `ClaudeFileMetadata`, `ClaudeFilePage`, `ClaudeDeletedFile`, `ClaudeFileListParams` |
 | `Claude-Messaging-MCP` | `ClaudeMCPServerDefinition`, `ClaudeMCPToolConfiguration` |
 | `Claude-Messaging-Skills` | `ClaudeSkill`, `ClaudeSkillVersion`, `ClaudeDeletedSkill`, `ClaudeDeletedSkillVersion`, page types, list params |
+| `Claude-Messaging-Batches` | `ClaudeBatch`, `ClaudeBatchPage`, `ClaudeBatchRequest`, `ClaudeBatchCreateParams`, `ClaudeBatchListParams`, `ClaudeBatchResult` (+ `ClaudeBatchSucceededResult`, `ClaudeBatchErroredResult`, `ClaudeBatchCanceledResult`, `ClaudeBatchExpiredResult`), `ClaudeBatchRequestCounts`, `ClaudeDeletedBatch`, `ClaudeBatchErrorPayload`, `ClaudeBatchNotEndedError`, plus `ClaudeClient` extension methods (`createBatch:`, `getBatch:`, `listBatches`, `cancelBatch:`, `deleteBatch:`, `streamBatchResults:do:`, `pollBatch:untilEndedEvery:`) |
 | `Claude-Messaging-Examples` | Runnable usage examples + `ClaudeSDKExampleSupport` |
 
 ### Test packages
@@ -105,13 +115,15 @@ and `ClaudeMockServer`.
 
 | Package | Contents |
 |---------|----------|
-| `PharoKeyring` | `PharoKeyring` (facade), `PharoKeyringBackend` (abstract), `LinuxSecretToolBackend`, `MacOSSecurityBackend`, `PharoKeyringError`, `KeyringCommandError` |
-| `PharoKeyring-Tests` | `PharoKeyringTest`, `PharoKeyringIntegrationTest`, `LinuxSecretToolBackendTest`, `MockKeyringBackend` |
+| `PharoKeyring` | `PharoKeyring` (facade), `PharoKeyringBackend` (abstract), `LinuxSecretToolBackend`, `LinuxPassToolBackend`, `MacOSSecurityBackend`, `PharoKeyringError`, `KeyringCommandError` |
+| `PharoKeyring-Tests` | `PharoKeyringTest`, `PharoKeyringIntegrationTest`, `LinuxSecretToolBackendTest`, `LinuxPassToolBackendTest`, `MockKeyringBackend` |
 
 Dependency order (per `BaselineOfClaudeSDK`): PharoKeyring is
 standalone; Types loads before everything else; Errors, Streaming,
 Files, MCP, Skills depend on Types; Client depends on Types, Errors,
-Streaming, Files, MCP, Skills; Tools depends on Types and Client
+Streaming, Files, MCP, Skills; Batches depends on Types, Errors,
+Streaming, and Client (Batches adds `ClaudeClient` extension methods,
+so the host class must load first); Tools depends on Types and Client
 (Tools adds extension methods to `ClaudeMessageRequest`, a Types
 class — the host class must exist before extensions compile);
 Examples depends on Client, Tools, and PharoKeyring.
@@ -565,10 +577,12 @@ the same Metacello baseline:
   Examples: `Claude-Messaging-Types`, `Claude-Messaging-Client`,
   `Claude-Messaging-Streaming`, `Claude-Messaging-Files`,
   `Claude-Messaging-MCP`, `Claude-Messaging-Skills`,
-  `Claude-Messaging-Tools`, `Claude-Messaging-Errors`,
-  `Claude-Messaging-Examples`.
+  `Claude-Messaging-Batches`, `Claude-Messaging-Tools`,
+  `Claude-Messaging-Errors`, `Claude-Messaging-Examples`.
 - **`Claude-ManagedAgents-*`** — Anthropic's Managed Agents API
-  beta resources. New in v0.7+. Examples (planned):
+  beta resources. Planned for an upcoming minor (the first
+  package, Sessions, targets v0.7.1); none have shipped yet.
+  Examples (planned):
   `Claude-ManagedAgents-Sessions`,
   `Claude-ManagedAgents-MemoryStores`,
   `Claude-ManagedAgents-Agents`,
@@ -614,15 +628,15 @@ ClaudeClient
   classified: '*Claude-ManagedAgents-Sessions'.
 ```
 
-Selective loading is planned for v0.7 (when the first
-`Claude-ManagedAgents-*` package ships): Metacello groups
+Selective loading is planned for the release that ships the first
+`Claude-ManagedAgents-*` package (v0.7.1): Metacello groups
 `messaging`, `managed-agents`, and `default` will be introduced
 as a baseline extension, so a consumer loading only the
 `messaging` group gets `ClaudeClient` with only Messages
 methods; loading `managed-agents` adds the agent methods on
-top. The bare baseline-class rename
+top. The baseline-class rename
 (`BaselineOfClaudeMessaging` → `BaselineOfClaudeSDK`, bead
-`claude-messaging-pharo-0cd`, tag v0.5.1) ships first and does
+`claude-messaging-pharo-0cd`) shipped in tag v0.5.1 and did
 not introduce groups. Today `BaselineOfClaudeSDK` ships
 no groups, so consumers receive both families together.
 
