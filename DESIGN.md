@@ -301,7 +301,7 @@ against oversized forms.
 **Decision:** `ClaudeAbstractTestSuite` in
 `Claude-Messaging-Client-Tests` holds the shared filter machinery
 (filter `slow`, filter `integration`). `ClaudeMessagingTestSuite`
-aggregates the 9 `Claude-Messaging-*-Tests` packages plus
+aggregates the 10 `Claude-Messaging-*-Tests` packages plus
 `PharoKeyring-Tests`. `make test` runs the Messaging suite only.
 
 In the monorepo, `ClaudeAgentTestSuite` extends the same pattern for
@@ -319,7 +319,7 @@ machinery stays in one place.
 
 **Decision:** `ClaudeBetaHeader` is a typed enumeration of
 Anthropic's beta-header strings (`mcp-client-2025-04-04`,
-`prompt-tools-2024-01-15`, `skills-2025-04-04`, etc.). Callers pass
+`message-batches-2024-09-24`, `skills-2025-10-02`, etc.). Callers pass
 instances: `request betas: { ClaudeBetaHeader mcpClient }`.
 
 **Rejected alternative:** Raw strings. Typos are silent and
@@ -410,10 +410,11 @@ a message) and conflates two distinct API families.
 **Consequences:** Consumers loading the SDK via Metacello today
 receive both families together — `BaselineOfClaudeSDK`
 ships no groups and no tiers. Selective loading via Metacello
-groups (`messaging` for the v0.5/v0.6 surface, `managed-agents`
-for the v0.7+ surface, `default` for everything) is planned for
-the v0.7 baseline rename work tracked in bead
-`claude-messaging-pharo-0cd`; when introduced, those groups will
+groups (`messaging` for the Messages surface, `managed-agents`
+for the Managed Agents surface, `default` for everything) is
+planned for the release that ships the first
+`Claude-ManagedAgents-*` package (targeted at v0.7.1); when
+introduced, those groups will
 partition the load surface so a consumer can pull in just the
 Messaging family or just the Managed Agents family. Tests
 organize the same way: `Claude-ManagedAgents-Sessions-Tests`,
@@ -471,8 +472,9 @@ identifiers, package names, and class-name fragments.
 **Context:** `ClaudeClient` lives in `Claude-Messaging-Client`
 and is the single gateway for every API call: `sendMessage:`,
 `streamMessage:do:`, `countTokens:`, `uploadFile:`, `listSkills`,
-and so on. v0.7+ adds Managed Agents methods (`createAgent:`,
-`getSession:`, `createSession:`, `listSessions:`, etc.). The
+and so on. An upcoming minor (v0.7.1+) will add Managed Agents
+methods (`createAgent:`, `getSession:`, `createSession:`,
+`listSessions:`, etc.). The
 question is whether `ClaudeClient` migrates to a new core
 package, gets split into multiple client classes, or stays where
 it is and grows via Pharo extension methods.
