@@ -1,5 +1,12 @@
 # Messaging Specification — Gap Analysis (Phase 2 Input)
 
+> **Update (post-freeze):** The Message Batches API has since shipped
+> in the `v0.6.0` tag as the `Claude-Messaging-Batches` package
+> (`ClaudeBatch*` types plus `ClaudeClient` extension methods — there is
+> no `ClaudeBatchService` class). The Batches endpoint and example rows
+> below have been updated to reflect that; the rest of this document is
+> preserved as the original Phase-2 input.
+
 ## Purpose
 
 This document enumerates every section in Anthropic's published Messages
@@ -60,13 +67,13 @@ maps to is `docs/specifications/claude-sdk-specification.tex`.
 | IP addresses | <https://docs.claude.com/en/api/ip-addresses> | Missing | P2 | Reference material only; link from §1 |
 | OpenAI SDK compatibility | <https://docs.claude.com/en/api/openai-sdk> | Missing | P2 | Not in v1 scope; note as out-of-scope |
 | Migration guide (Text Completions → Messages) | <https://docs.claude.com/en/api/migrating-from-text-completions-to-messages> | Missing | P2 | Not in v1 scope; Pharo SDK never shipped Text Completions |
-| Create Batch | <https://docs.claude.com/en/api/creating-message-batches> | Missing | P1 | Add `ClaudeBatchService` with create (up to 100k requests / 256 MB) |
-| Retrieve Batch | <https://docs.claude.com/en/api/retrieving-message-batches> | Missing | P1 | Part of Batches endpoint group |
-| Retrieve Batch Results | <https://docs.claude.com/en/api/retrieving-message-batch-results> | Missing | P1 | Stream `.jsonl` results from `results_url` |
-| List Batches | <https://docs.claude.com/en/api/listing-message-batches> | Missing | P1 | `before_id`/`after_id` pagination |
-| Cancel Batch | <https://docs.claude.com/en/api/canceling-message-batches> | Missing | P1 | Part of Batches endpoint group |
-| Delete Batch | <https://docs.claude.com/en/api/deleting-message-batches> | Missing | P1 | Part of Batches endpoint group |
-| Batches examples | <https://docs.claude.com/en/api/messages-batch-examples> | Missing | P1 | Paired examples once Batches API lands |
+| Create Batch | <https://docs.claude.com/en/api/creating-message-batches> | Have | — | Shipped: `ClaudeClient >> createBatch:` (`ClaudeBatchCreateParams`) |
+| Retrieve Batch | <https://docs.claude.com/en/api/retrieving-message-batches> | Have | — | Shipped: `ClaudeClient >> getBatch:` (returns `ClaudeBatch`) |
+| Retrieve Batch Results | <https://docs.claude.com/en/api/retrieving-message-batch-results> | Have | — | Shipped: `ClaudeClient >> streamBatchResults:do:` streams `.jsonl` from `results_url` (`ClaudeBatchNotEndedError` if not ended) |
+| List Batches | <https://docs.claude.com/en/api/listing-message-batches> | Have | — | Shipped: `ClaudeClient >> listBatches` / `listBatches:` (`ClaudeBatchListParams`, `before_id`/`after_id` pagination) |
+| Cancel Batch | <https://docs.claude.com/en/api/canceling-message-batches> | Have | — | Shipped: `ClaudeClient >> cancelBatch:` |
+| Delete Batch | <https://docs.claude.com/en/api/deleting-message-batches> | Have | — | Shipped: `ClaudeClient >> deleteBatch:` (returns `ClaudeDeletedBatch`) |
+| Batches examples | <https://docs.claude.com/en/api/messages-batch-examples> | Have | — | Shipped: `ClaudeMessagingBatchesExample` demonstrates the create -> poll -> stream loop |
 | Create a File | <https://docs.claude.com/en/api/files-create> | Have | — | Covered in §15 Files API |
 | List Files | <https://docs.claude.com/en/api/files-list> | Have | — | Covered in §15 |
 | Get File Metadata | <https://docs.claude.com/en/api/files-metadata> | Have | — | Covered in §15 |
@@ -130,7 +137,7 @@ maps to is `docs/specifications/claude-sdk-specification.tex`.
 ## Summary
 
 - **P0 gaps** (3): Context Editing (requires `ClaudeContextManagement` class — `Partial-code`), Vision expansion (`Partial-doc`), Citations chunking + RAG example (`Partial-doc`). Structured Outputs moved to `Have` after the 2026-04-21 fact-check discovered `ClaudeOutputConfig` + `ClaudeJsonSchemaOutputFormat` had already shipped.
-- **P1 gaps** (20): Messages examples pairings (`Partial-doc`), stop-reason handler patterns (`Partial-doc`), beta header catalog (`Partial-code` — new `ClaudeBetaHeader`), rate-limits taxonomy (`Partial-doc`), service-tier monitoring headers (`Partial-code` — new `ClaudeUsage serviceTier` slot + typed header accessors), full Batches endpoint group + examples (`Missing`), Using-the-Messages-API prose (`Partial-doc`), Extended-thinking interleaved/signature (`Partial-doc`), context windows (`Missing`), token-counting feature-guide prose (`Partial-doc`), PDF expansion (`Partial-doc`), Search Results wire shape (`Partial-code` — new `ClaudeSearchResultBlock`), Files API prose (`Partial-doc`), Batch processing prose (`Missing`), `tool_choice` full coverage (`Partial-doc`), fine-grained tool streaming (`Missing`), Computer use tool (`Missing`), programmatic tool calling (`Missing`), Agent Skills pre-built catalog (`Partial-doc`), Skills authoring best practices + quickstart (`Missing`).
+- **P1 gaps** (19): Messages examples pairings (`Partial-doc`), stop-reason handler patterns (`Partial-doc`), beta header catalog (`Partial-code` — new `ClaudeBetaHeader`), rate-limits taxonomy (`Partial-doc`), service-tier monitoring headers (`Partial-code` — new `ClaudeUsage serviceTier` slot + typed header accessors), Using-the-Messages-API prose (`Partial-doc`), Extended-thinking interleaved/signature (`Partial-doc`), context windows (`Missing`), token-counting feature-guide prose (`Partial-doc`), PDF expansion (`Partial-doc`), Search Results wire shape (`Partial-code` — new `ClaudeSearchResultBlock`), Files API prose (`Partial-doc`), Batch processing prose (`Missing`), `tool_choice` full coverage (`Partial-doc`), fine-grained tool streaming (`Missing`), Computer use tool (`Missing`), programmatic tool calling (`Missing`), Agent Skills pre-built catalog (`Partial-doc`), Skills authoring best practices + quickstart (`Missing`).
 - **P2 gaps** (15): Supported regions, IP addresses, OpenAI SDK compat, Text Completions migration, Prompt Tools API (3 endpoints), Admin API overview + members + API-key + Usage-and-Cost + Claude Code Analytics, Build-with-Claude features overview, token-efficient tool use, Advisor tool, Remote MCP servers directory, What is MCP conceptual overview.
 
 ### Partial-doc vs Partial-code split
