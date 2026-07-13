@@ -18,7 +18,7 @@ Load via Metacello:
 ```smalltalk
 Metacello new
   baseline: 'ClaudeSDK';
-  repository: 'github://punt-labs/anthropic-sdk-pharo:v0.5.1/src';
+  repository: 'github://punt-labs/anthropic-sdk-pharo:v0.7.0/src';
   load.
 ```
 
@@ -136,6 +136,7 @@ request betas: { ClaudeBetaHeader mcpClient }.
 | `Claude-Messaging-Files` | Files API — upload, download, list, delete |
 | `Claude-Messaging-MCP` | MCP connector — request-side server definitions |
 | `Claude-Messaging-Skills` | Skills API — upload reusable tool packages |
+| `Claude-Messaging-Batches` | Message Batches API — create, poll, and stream results (`ClaudeBatch*` types + `ClaudeClient` extensions) |
 | `Claude-Messaging-Examples` | Runnable usage examples |
 | `PharoKeyring` | Cross-platform OS keyring resolver (read-only) for API keys — `pass`, `secret-tool`, or macOS Keychain |
 

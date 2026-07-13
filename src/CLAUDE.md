@@ -41,6 +41,7 @@ and their purpose; the root file owns the detail.
 | `Claude-Messaging-Files` | Files API — upload, download, list, delete |
 | `Claude-Messaging-MCP` | MCP connector — request-side server definition + tool config (response content blocks live in `Claude-Messaging-Types`) |
 | `Claude-Messaging-Skills` | Skills API — upload reusable tool packages |
+| `Claude-Messaging-Batches` | Message Batches API — `ClaudeBatch*` types plus `ClaudeClient` extension methods (create, get, list, cancel, delete, stream, poll) |
 | `Claude-Messaging-Examples` | Runnable usage examples for the messaging surface |
 
 ### Baseline
