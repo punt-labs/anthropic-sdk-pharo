@@ -56,6 +56,7 @@ Code is organized in one layer plus a standalone package:
 | `Claude-Messaging-Files` | Files API — upload, download, list, delete |
 | `Claude-Messaging-MCP` | MCP connector — request-side server definition |
 | `Claude-Messaging-Skills` | Skills API — upload reusable tool packages |
+| `Claude-Messaging-Batches` | Message Batches API — create, poll, and stream results |
 | `Claude-Messaging-Examples` | Runnable usage examples |
 | `PharoKeyring` | Cross-platform OS keyring wrapper (standalone) |
 

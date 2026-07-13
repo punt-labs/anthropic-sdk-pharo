@@ -7,10 +7,11 @@ Anthropic API surface. v1.0.0 marks feature parity with the official
 
 ## Released
 
-### v0.5.0 — current
+### v0.5.0 / v0.5.1
 
 Messages API plus Messages-adjacent resources. About half the surface
-of `anthropic-sdk-python`.
+of `anthropic-sdk-python`. v0.5.1 renamed the Metacello baseline from
+`ClaudeMessaging` to `ClaudeSDK` (see ADR-40/41/42).
 
 - **Messages API**: `sendMessage:`, `streamMessage:do:`, `countTokens:`,
   multi-turn conversations, prompt caching, citations, extended
@@ -28,20 +29,45 @@ of `anthropic-sdk-python`.
 - **Typed beta-header catalog** (`ClaudeBetaHeader`)
 - **Typed response metadata** (rate-limit and service-tier)
 - **Streaming**: SSE decoder plus raw TLS socket variants
-- 770 unit tests, integration tests against the live Anthropic API
+
+### v0.6.0 / v0.6.1 — Batches API
+
+Async Messages submission. Submit a batch of message requests, poll
+for completion, retrieve results. Same request shape as Messages on a
+different endpoint family.
+
+- Package `Claude-Messaging-Batches` (`ClaudeBatch*` types plus
+  `ClaudeClient` extension methods: `createBatch:`, `getBatch:`,
+  `listBatches`, `cancelBatch:`, `deleteBatch:`,
+  `streamBatchResults:do:`, `pollBatch:untilEndedEvery:`)
+  (`message-batches-2024-09-24` beta)
+- Polymorphic batch outcomes (`ClaudeBatchSucceededResult`,
+  `ClaudeBatchErroredResult`, `ClaudeBatchCanceledResult`,
+  `ClaudeBatchExpiredResult`)
+
+### v0.7.0 — current — Keyring backends & baseline hardening
+
+Keyring resolution and Metacello baseline consolidation. No new API
+surface; hardens key handling and cold-load correctness.
+
+- **`pass` keyring backend** (`LinuxPassToolBackend`): `PharoKeyring`
+  resolves keys from the `pass`(1) password store on Linux, preferred
+  over `secret-tool` when both are installed
+- **Read-only `PharoKeyring`**: resolves keys the user provisioned via
+  the OS tools; no longer stores or deletes them (removes the only
+  cleartext-key leak vector)
+- **Two-tier API-key resolution** in `ClaudeSDKExampleSupport
+  resolveClient` (Pharo override then general key; env before keyring)
+- **`ClaudeSDK` baseline** with a `make check-baseline` cold-load guard
+  and CI `baseline` job
+- 916 tests total (866 fast plus 50 live-API integration tests)
 
 ## Planned increments
 
 Each minor release adds one major API surface. Order reflects
 dependency: shared primitives before consumers.
 
-### v0.6.0 — Batches API
-
-Async Messages submission. Submit a batch of message requests, poll
-for completion, retrieve results. Same request shape as Messages on a
-different endpoint family.
-
-### v0.7.0 — Sessions (beta)
+### v0.7.1 — Sessions (beta)
 
 Server-side stateful conversation primitive. Used standalone for
 long-running chats and as a building block for Managed Agents.
@@ -64,8 +90,8 @@ on `ClaudeClient` for `createMemoryStore:`, `getMemoryStore:`,
 ### v0.9.0 — Agents (beta)
 
 Managed Agents — the agentic runtime hosted by Anthropic.
-Composes sessions, memory stores, skills, and tools. Depends on v0.7
-and v0.8 having shipped.
+Composes sessions, memory stores, skills, and tools. Depends on v0.7.1
+and v0.8.0 having shipped.
 
 Packages: `Claude-ManagedAgents-Agents`,
 `Claude-ManagedAgents-Agents-Tests`. Adds extension methods on
