@@ -29,3 +29,6 @@ PharoDebug.log
 # Stray beads embedded-dolt dir created in the wrong place;
 # the real beads config is the top-level .beads/ (server mode)
 aspharo/
+
+# Quarry session-transcript captures (pkit-kcps)
+.punt-labs/quarry/captures/
