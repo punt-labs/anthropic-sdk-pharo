@@ -23,6 +23,9 @@ PharoDebug.log
 
 .biff.local
 
+# Machine-specific direnv overrides — may hold secrets, never committed
+.envrc.local
+
 # Claude Code scheduler runtime lock (machine-local, transient)
 .claude/scheduled_tasks.lock
 
