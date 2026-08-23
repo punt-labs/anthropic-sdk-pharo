@@ -5,7 +5,10 @@ on:
     # filename. `biff enable` renders this list from the target repo's own
     # .github/workflows/*.yml and *.yaml name: fields, so a fixed list can't
     # watch the wrong workflows in a repo whose names differ from biff's.
-    workflows: ["Docs", "Lint", "Release", "Slow Suite", "Test"]
+    # "Slow Suite" is deliberately excluded: slow-suite.yml only triggers on
+    # schedule/pull_request/workflow_dispatch, never push, so the job's
+    # `if: ... == 'push'` guard below could never fire for it — a dead watch.
+    workflows: ["Docs", "Lint", "Release", "Test"]
     types: [completed]
 
 permissions:
