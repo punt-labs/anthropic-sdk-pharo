@@ -38,3 +38,6 @@ aspharo/
 
 # Claude Code local settings (per-machine, may contain paths/tokens)
 .claude/settings.local.json
+
+# Sibling lock every punt CLI takes before mutating a shared host file (persists by design)
+.*.lock
