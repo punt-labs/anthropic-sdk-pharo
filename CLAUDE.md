@@ -677,3 +677,5 @@ Build the PDFs locally with `make spec` (requires `pdflatex`).
 Iceberg (libgit2) is configured for this repo. SSH via ed25519
 key. Iceberg handles commit, push, fetch, branch. Merge is done
 from CLI.
+
+PR review follows punt-kit/standards/pr-review.md: local review (qodo review + silent-failure-hunter + code-reviewer) before the PR, then Qodo and Bugbot once at open, at most two rounds, Copilot only on request.
