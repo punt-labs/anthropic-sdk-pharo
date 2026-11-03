@@ -43,6 +43,7 @@ aspharo/
 .*.lock
 
 # ethos local zone (runtime state, never committed)
+.punt-labs/**/local/**
 .punt-labs/**/*.local.*
 .punt-labs/ethos/sessions/
 .punt-labs/ethos/missions/
