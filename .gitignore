@@ -41,3 +41,10 @@ aspharo/
 
 # Sibling lock every punt CLI takes before mutating a shared host file (persists by design)
 .*.lock
+
+# ethos local zone (runtime state, never committed)
+.punt-labs/**/*.local.*
+.punt-labs/ethos/sessions/
+.punt-labs/ethos/missions/
+.punt-labs/ethos/missions.jsonl*
+.punt-labs/**/*.ethos-tmp*
