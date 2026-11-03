@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Dropped the retired `punt-labs/team` registry submodule at
+  `.punt-labs/ethos`; ethos resolves identities from the global store.
+
 ## [0.7.0] - 2026-07-12
 
 ### Added
