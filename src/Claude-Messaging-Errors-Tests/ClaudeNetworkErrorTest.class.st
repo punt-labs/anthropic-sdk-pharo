@@ -1,5 +1,5 @@
 "
-Tests for ClaudeNetworkError — the non-timeout network error wrapper signaled for connection refusals, closed sockets, TLS failures, and other non-transient network failures. See bead i7uc.
+Tests for ClaudeNetworkError — the non-timeout network error wrapper signaled for connection refusals, closed sockets, TLS failures, and other non-transient network failures. See bead stasdk-i7uc.
 
   ClaudeNetworkErrorTest buildSuite
   >>> a TestSuite

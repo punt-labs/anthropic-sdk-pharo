@@ -1,5 +1,5 @@
 "
-Tests for ClaudeClient API methods (sendMessage:, countTokens:, listModels, getModel:) using ClaudeMockServer. Each test starts a mock HTTP server, configures canned responses, exercises the client method, and asserts on the parsed result and captured request. From spec Appendix C.2, bead qn4.
+Tests for ClaudeClient API methods (sendMessage:, countTokens:, listModels, getModel:) using ClaudeMockServer. Each test starts a mock HTTP server, configures canned responses, exercises the client method, and asserts on the parsed result and captured request. From spec Appendix C.2, bead stasdk-qn4.
 "
 Class {
 	#name : 'ClaudeClientLifecycleTest',

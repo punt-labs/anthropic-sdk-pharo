@@ -1,5 +1,5 @@
 "
-Unit tests for ClaudeThinkingBlock — accessors, type tag, and the isThinkingBlock polymorphic predicate. See bead 1xgi.
+Unit tests for ClaudeThinkingBlock — accessors, type tag, and the isThinkingBlock polymorphic predicate. See bead stasdk-1xgi.
 
   ClaudeThinkingBlockTest buildSuite
   >>> a TestSuite

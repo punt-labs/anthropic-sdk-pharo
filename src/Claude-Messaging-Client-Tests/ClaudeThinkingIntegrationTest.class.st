@@ -25,7 +25,7 @@ only `integrationSuite` includes it.
 defines polymorphic predicates (`isTextBlock`, `isToolUseBlock`,
 `isToolResultBlock`, `isMCPToolUseBlock`, `isMCPToolResultBlock`,
 `isDocumentBlock`, `isThinkingBlock`) that callers use instead of
-`isKindOf:`. See bead 1xgi.
+`isKindOf:`. See bead stasdk-1xgi.
 
 **Signature cannot be faked.** The signature is a cryptographic
 hash derived from the thinking content and server-side secrets. It
@@ -86,7 +86,7 @@ ClaudeThinkingIntegrationTest >> testThinkingBlockReturnedAgainstAnthropic [
 	 computed; the client cannot fabricate either.
 
 	 Skips cleanly when no API key is present. No cleanup: thinking
-	 blocks are stateless on our side. See 1xgi — filter uses the
+	 blocks are stateless on our side. See stasdk-1xgi — filter uses the
 	 polymorphic isThinkingBlock predicate rather than isKindOf:."
 
 	| client response thinkingBlocks first |
