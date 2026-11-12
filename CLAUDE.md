@@ -697,8 +697,9 @@ bd show <id>                                                 # Details with depe
 
 Create, claim (In Progress), finish (Done) and cancel issues in Linear,
 with the `repo:aspharo` label plus a type label (`Bug`, `Feature`,
-`Improvement`, `Epic`). A local `bd update`, `bd close` or `bd create` is
-undone by the next pull. Issue status is written in Linear, never with a
-local `bd` edit; there is no beads sync step in the session close.
+`Improvement`, `Epic`). A local `bd update` or `bd close` is undone by the
+next pull of that issue; a local `bd create` leaves an orphan bead with no
+`external_ref` that no pull removes. Issue status is written in Linear, never
+with a local `bd` edit; there is no beads sync step in the session close.
 
 @.punt-labs/punt/CLAUDE.md
