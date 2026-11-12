@@ -166,7 +166,7 @@ ClaudeClientRetryTest >> testConnectionRefusedRaisesClaudeNetworkErrorWithoutRet
 	 on every retry. executeWithRetry: must wrap them in ClaudeNetworkError
 	 (isRetryable=false) and propagate to the caller after the FIRST
 	 attempt. We assert this by counting block invocations: exactly 1
-	 even with maxRetries: 2 configured. See bead i7uc."
+	 even with maxRetries: 2 configured. See bead stasdk-i7uc."
 
 	| callCount |
 	callCount := 0.
@@ -188,7 +188,7 @@ ClaudeClientRetryTest >> testConnectionTimedOutRaisesClaudeTimeoutErrorAndRetrie
 	 so executeWithRetry: must wrap it in ClaudeTimeoutError(408)
 	 (isRetryable=true) and exercise the retry budget before exhausting.
 	 With maxRetries: 2 the block fires 1 + 2 = 3 times before propagating.
-	 See bead i7uc."
+	 See bead stasdk-i7uc."
 
 	| callCount expected |
 	callCount := 0.

@@ -132,7 +132,7 @@ ClaudeMessage >> accumulate: anEventDict [
 	"Process one streaming event. anEventDict has 'event' (String) and 'data' (Dictionary).
 	An 'error' event (rate limit, overload, auth failure after stream start)
 	raises the matching ClaudeApiError subclass via ClaudeApiError
-	class>>#fromSseErrorData:. See bead 8x5."
+	class>>#fromSseErrorData:. See bead stasdk-8x5."
 	| eventType data |
 	eventType := anEventDict at: 'event'.
 	data := anEventDict at: 'data'.
@@ -246,7 +246,7 @@ ClaudeMessage >> handleErrorEvent: data [
 	The data payload has shape
 	{ 'type': 'error', 'error': { 'type': 'overloaded_error', 'message': '...' } }.
 	We never return to the caller from this method — it always signals.
-	See bead 8x5."
+	See bead stasdk-8x5."
 
 	(ClaudeApiError fromSseErrorData: data) signal
 ]

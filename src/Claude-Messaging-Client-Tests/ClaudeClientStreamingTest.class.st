@@ -1,5 +1,5 @@
 "
-Tests for ClaudeClient streaming methods (streamMessage:do: and streamRawBody:) using ClaudeMockServer with canned SSE responses. From spec Appendix C.3.4, bead okv.
+Tests for ClaudeClient streaming methods (streamMessage:do: and streamRawBody:) using ClaudeMockServer with canned SSE responses. From spec Appendix C.3.4, bead stasdk-okv.
 "
 Class {
 	#name : 'ClaudeClientStreamingTest',
@@ -34,7 +34,7 @@ ClaudeClientStreamingTest >> setUp [
 { #category : 'fixtures' }
 ClaudeClientStreamingTest >> sseErrorResponseBody [
 	"Canned SSE response body for an overloaded_error event. The API can
-	send an error event at any point during a stream; see bead 8x5."
+	send an error event at any point during a stream; see bead stasdk-8x5."
 
 	^ 'event: error
 data: {"type":"error","error":{"type":"overloaded_error","message":"stream overloaded"}}
@@ -107,7 +107,7 @@ ClaudeClientStreamingTest >> testStreamMessageCallsBlock [
 
 { #category : 'tests' }
 ClaudeClientStreamingTest >> testStreamMessageRaisesOnErrorEvent [
-	"Integration test for bead 8x5 round 2. An error event arriving
+	"Integration test for bead stasdk-8x5 round 2. An error event arriving
 	mid-stream must propagate as the matching ClaudeApiError subclass
 	with statusCode populated from the reverse mapping."
 

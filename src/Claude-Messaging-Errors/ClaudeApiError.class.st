@@ -118,7 +118,7 @@ ClaudeApiError class >> fromSseErrorData: aDictionary [
 	Unknown error.type strings fall back to this class (ClaudeApiError)
 	so the caller still gets an exception rather than a crash. Populates
 	statusCode via sseErrorTypeStatusRegistry so isRetryable and printOn:
-	work symmetrically with sync-path errors. See bead 8x5 round 2."
+	work symmetrically with sync-path errors. See bead stasdk-8x5 round 2."
 
 	| errorDict errorType subclass errorMessage statusForType |
 	errorDict := aDictionary at: 'error' ifAbsent: [ Dictionary new ].
@@ -152,7 +152,7 @@ ClaudeApiError class >> sseErrorTypeStatusRegistry [
 	"Reverse mapping from Anthropic SSE error.type strings to their canonical
 	HTTP status codes. Used by fromSseErrorData: to populate statusCode on
 	SSE-origin errors so isRetryable and printOn: work correctly. Mirrors
-	the shape of errorTypeRegistry and statusRegistry. See bead 8x5 round 2."
+	the shape of errorTypeRegistry and statusRegistry. See bead stasdk-8x5 round 2."
 	^ {
 		'authentication_error' -> 401.
 		'billing_error' -> 402.
@@ -193,7 +193,7 @@ ClaudeApiError >> isRetryable [
 	"Return true if this error is one where the caller should retry the
 	request (408 timeout, 429 rate limit, 5xx server errors). Defensive
 	against nil statusCode so unknown SSE error types fall through to
-	false instead of crashing with DNU on nil >=. See bead 8x5 round 3."
+	false instead of crashing with DNU on nil >=. See bead stasdk-8x5 round 3."
 
 	statusCode ifNil: [ ^ false ].
 	statusCode = 408 ifTrue: [ ^ true ].

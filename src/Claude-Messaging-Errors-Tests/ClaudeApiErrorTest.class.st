@@ -130,7 +130,7 @@ ClaudeApiErrorTest >> testIsRetryable [
 
 { #category : 'tests' }
 ClaudeApiErrorTest >> testIsRetryableNilSafe [
-	"Regression test for bead 8x5 round 3. Unknown SSE error.type strings
+	"Regression test for bead stasdk-8x5 round 3. Unknown SSE error.type strings
 	fall back to the base ClaudeApiError class with statusCode = nil.
 	isRetryable must return false in that case instead of crashing with
 	DNU (receiver of >= is nil)."
@@ -150,7 +150,7 @@ ClaudeApiErrorTest >> testIsRetryableNilSafe [
 
 { #category : 'tests' }
 ClaudeApiErrorTest >> testIsRetryableOnSseOriginError [
-	"Regression test for bead 8x5 rounds 2 and 3. SSE-origin errors
+	"Regression test for bead stasdk-8x5 rounds 2 and 3. SSE-origin errors
 	constructed via fromSseErrorData: must populate statusCode so
 	isRetryable does not crash with DNU (receiver of >= is nil). Exercises
 	both branches: overloaded_error is retryable, authentication_error is

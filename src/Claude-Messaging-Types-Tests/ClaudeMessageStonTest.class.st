@@ -1,5 +1,5 @@
 "
-Round-trip tests for STON serialization on Claude-SDK-Types content blocks. Each test serializes via STON toString:, deserializes via STON fromString:, and asserts both the value and the class of the result. Stage 1 of bead 9kz (workbench conversation persistence).
+Round-trip tests for STON serialization on Claude-SDK-Types content blocks. Each test serializes via STON toString:, deserializes via STON fromString:, and asserts both the value and the class of the result. Stage 1 of bead stasdk-9kz (workbench conversation persistence).
 "
 Class {
 	#name : 'ClaudeMessageStonTest',

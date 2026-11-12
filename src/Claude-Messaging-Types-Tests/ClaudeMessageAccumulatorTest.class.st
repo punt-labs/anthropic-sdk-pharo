@@ -239,7 +239,7 @@ ClaudeMessageAccumulatorTest >> testAccumulateRaisesBaseErrorOnUnknownErrorType 
 	"When the SSE error.type is not in the registry (future Anthropic
 	error type, or malformed payload), fall back to ClaudeApiError so
 	the caller still gets an exception instead of a silent nil content
-	crash. Bead 8x5."
+	crash. Bead stasdk-8x5."
 
 	| msg event raised |
 	msg := ClaudeMessage new.
@@ -266,7 +266,7 @@ ClaudeMessageAccumulatorTest >> testAccumulateRaisesBaseErrorOnUnknownErrorType 
 
 { #category : 'tests' }
 ClaudeMessageAccumulatorTest >> testAccumulateRaisesOnErrorEvent [
-	"Regression for bead 8x5. When the Claude API streams an error SSE
+	"Regression for bead stasdk-8x5. When the Claude API streams an error SSE
 	event (rate limit, overload), accumulate: must raise the matching
 	ClaudeApiError subclass instead of silently leaving content nil.
 	Pre-fix: the error event fell through accumulate:, content stayed
@@ -295,7 +295,7 @@ ClaudeMessageAccumulatorTest >> testAccumulateRaisesOnErrorEvent [
 ClaudeMessageAccumulatorTest >> testAccumulateRaisesRateLimitOnErrorEvent [
 	"Complements testAccumulateRaisesOnErrorEvent. Verifies the registry
 	routes 'rate_limit_error' to ClaudeRateLimitError, not just the
-	overloaded path. Bead 8x5."
+	overloaded path. Bead stasdk-8x5."
 
 	| msg event |
 	msg := ClaudeMessage new.

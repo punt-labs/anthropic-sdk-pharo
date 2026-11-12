@@ -595,7 +595,7 @@ ClaudeClient >> checkResponse: aZnResponse [
 	"Signal typed ClaudeApiError if response is not 2xx. Parses Retry-After headers.
 	 Tries retry-after-ms first; if absent or unparseable, falls through to retry-after
 	 (seconds). Negative or malformed values are clamped/discarded — neither can reach
-	 backoffDelay:retryAfter: as a crash sentinel. See bead zty and
+	 backoffDelay:retryAfter: as a crash sentinel. See bead stasdk-zty and
 	 docs/coes/2026-04-08-rename-method-cascade.md."
 	| error headers |
 	aZnResponse isSuccess ifTrue: [ ^ self ].
@@ -722,7 +722,7 @@ ClaudeClient >> executeWithRetry: aBlock [
 	 Network errors from ZnClient are narrowed:
 	   - ConnectionTimedOut -> ClaudeTimeoutError(408), retryable (matches streaming path).
 	   - Other NetworkError subclasses (ConnectionRefused, SocketClosed, TLS failures)
-	     -> ClaudeNetworkError(599), non-retryable, propagates to caller. See i7uc."
+	     -> ClaudeNetworkError(599), non-retryable, propagates to caller. See stasdk-i7uc."
 
 	| attempt |
 	attempt := 0.
@@ -1063,7 +1063,7 @@ ClaudeClient >> openTLSStreamingSocket: aClaudeMessageRequest [
 	 for line-by-line SSE reading. Network errors are narrowed:
 	   - ConnectionTimedOut -> ClaudeTimeoutError(408), retryable at the caller level.
 	   - Other NetworkError subclasses -> ClaudeNetworkError(599), non-retryable.
-	 See i7uc."
+	 See stasdk-i7uc."
 
 	| sock statusCode headers |
 	sock := ClaudeStreamingSocket host: self apiHost.
@@ -1175,7 +1175,7 @@ ClaudeClient >> signalNetworkErrorClosing: sock message: aString [
 	 failures). Sibling of signalTimeoutClosing:message: — kept as a
 	 separate helper so the timeout path retains its exact behavior
 	 and so each caller reads as ``signal the right thing, then close``.
-	 See bead i7uc."
+	 See bead stasdk-i7uc."
 
 	sock close.
 	(ClaudeNetworkError new statusCode: 599; message: aString; yourself) signal
@@ -1218,7 +1218,7 @@ ClaudeClient >> streamMessage: aClaudeMessageRequest do: aBlock [
 	 buffered for HTTP. Network errors during SSE decoding are narrowed the
 	 same way as executeWithRetry: — ConnectionTimedOut becomes
 	 ClaudeTimeoutError(408), other NetworkError subclasses become
-	 ClaudeNetworkError(599). See i7uc."
+	 ClaudeNetworkError(599). See stasdk-i7uc."
 
 	| sock decoder message |
 	aClaudeMessageRequest stream: true.

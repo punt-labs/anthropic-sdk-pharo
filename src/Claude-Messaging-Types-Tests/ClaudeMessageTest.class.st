@@ -400,7 +400,7 @@ ClaudeMessageTest >> testTextContent [
 
 { #category : 'tests' }
 ClaudeMessageTest >> testTextContentOnNilContent [
-	"Regression for bead 8x5. A ClaudeMessage with nil content returns
+	"Regression for bead stasdk-8x5. A ClaudeMessage with nil content returns
 	an empty string from textContent instead of crashing with DNU on
 	nil do:. This happens when an error-only SSE response never
 	populated the content slot."
@@ -438,7 +438,7 @@ ClaudeMessageTest >> testToolUseBlocks [
 
 { #category : 'tests' }
 ClaudeMessageTest >> testToolUseBlocksOnNilContent [
-	"Regression for bead 8x5 — same class of bug as
+	"Regression for bead stasdk-8x5 — same class of bug as
 	testTextContentOnNilContent. A ClaudeMessage with nil content
 	returns an empty collection from toolUseBlocks instead of
 	crashing with DNU on nil select:."

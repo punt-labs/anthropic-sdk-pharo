@@ -1,5 +1,5 @@
 "
-Tests for real-time incremental streaming — SSE decoder on streams, SharedQueue producer/consumer pattern, and stream end detection. From spec Appendix C.3.5, bead kqf.
+Tests for real-time incremental streaming — SSE decoder on streams, SharedQueue producer/consumer pattern, and stream end detection. From spec Appendix C.3.5, bead stasdk-kqf.
 "
 Class {
 	#name : 'ClaudeClientRealTimeStreamingTest',
