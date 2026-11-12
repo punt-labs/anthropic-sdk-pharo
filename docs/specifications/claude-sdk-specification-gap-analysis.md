@@ -12,7 +12,8 @@
 This document enumerates every section in Anthropic's published Messages
 API documentation and records the Pharo SDK's current coverage against
 it. It is the input artifact for **Phase 2** of the docs-alignment work
-(bead `p4iz`): Phase 2 fills the gaps identified here by expanding the
+(bead `stasdk-p4iz` in claude-agent-sdk-smalltalk, closed): Phase 2
+fills the gaps identified here by expanding the
 restructured spec's `Gap (Phase 2): ...` stubs into full sections.
 
 Reference: the Anthropic TOC this is scored against lives at
