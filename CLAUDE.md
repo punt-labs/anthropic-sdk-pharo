@@ -636,7 +636,7 @@ as a baseline extension, so a consumer loading only the
 methods; loading `managed-agents` adds the agent methods on
 top. The baseline-class rename
 (`BaselineOfClaudeMessaging` → `BaselineOfClaudeSDK`, bead
-`claude-messaging-pharo-0cd`) shipped in tag v0.5.1 and did
+`aspharo-0cd`, closed) shipped in tag v0.5.1 and did
 not introduce groups. Today `BaselineOfClaudeSDK` ships
 no groups, so consumers receive both families together.
 
@@ -679,3 +679,26 @@ key. Iceberg handles commit, push, fetch, branch. Merge is done
 from CLI.
 
 PR review follows punt-kit/standards/pr-review.md: local review (qodo review + silent-failure-hunter + code-reviewer) before the PR, then Qodo and Bugbot once at open, at most two rounds, Copilot only on request.
+
+## Issue Tracking
+
+Linear is the tracker of record: the Punt Labs team, issues labelled
+`repo:aspharo`, listed in the shared `anthropic-sdk-pharo` view. Beads
+(`bd`) is a read-mostly local mirror; `.punt-labs/punt/CLAUDE.md`
+(imported below) has the rules for which tracker to write to, and
+`.beads/README.md` has the mirror commands and the required `bd` build.
+
+```bash
+bd config get linear.pull_label   # Must print repo:aspharo; if not, pull main and re-run before any pull
+bd linear sync --pull-if-stale --relations --team c1dfbb2c-985e-40cf-b004-5127646efc9d
+bd ready --label-any repo:aspharo --exclude-label deferred   # Ready work in this repo
+bd show <id>                                                 # Details with dependencies
+```
+
+Create, claim (In Progress), finish (Done) and cancel issues in Linear,
+with the `repo:aspharo` label plus a type label (`Bug`, `Feature`,
+`Improvement`, `Epic`). A local `bd update`, `bd close` or `bd create` is
+undone by the next pull. Issue status is written in Linear, never with a
+local `bd` edit; there is no beads sync step in the session close.
+
+@.punt-labs/punt/CLAUDE.md
