@@ -18,7 +18,7 @@ Load via Metacello:
 ```smalltalk
 Metacello new
   baseline: 'ClaudeSDK';
-  repository: 'github://punt-labs/anthropic-sdk-pharo:v0.7.0/src';
+  repository: 'github://punt-labs/anthropic-sdk-pharo:v0.8.0/src';
   load.
 ```
 

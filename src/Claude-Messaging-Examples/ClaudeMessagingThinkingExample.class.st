@@ -1,6 +1,6 @@
 "
 Demonstrate extended thinking. Builds a ClaudeMessageRequest that
-enables the thinking feature with a 1024-token budget and asks the
+turns on adaptive thinking with a summarized display and asks the
 model a reasoning-heavy question. The response carries at least one
 ClaudeThinkingBlock alongside the assistant's final ClaudeTextBlock.
 
@@ -11,12 +11,12 @@ signature is derived from the thinking content plus server-side
 secrets and is required to round-trip thinking blocks in subsequent
 requests.
 
-**Budget versus maxTokens.** Anthropic's API requires
-`max_tokens > budget_tokens`. We set `budgetTokens: 1024` and
-`maxTokens: 2048` so the model has 1024 tokens for reasoning and up
-to another 1024 for the final answer. Smaller budgets (below ~1024)
-often produce no thinking block at all because the model decides the
-problem does not warrant deliberation.
+**Adaptive, not a fixed budget.** Current models (the Claude 5
+family) reject `thinking: {type: enabled, budget_tokens: N}` with a
+400; the model decides how much to think, steered by effort. The
+`display: summarized` option makes the response carry a readable
+summary of the reasoning. Without it these models default to
+`omitted`, which returns thinking blocks whose text is empty.
 
 **Why Monty Hall.** The prompt is a reasoning-heavy puzzle whose
 counter-intuitive answer (2/3, not 1/2) drives the model to produce
@@ -25,21 +25,21 @@ a single text block.
 
 **Wiring.** `ClaudeMessageRequest` has no `thinkingParams:` setter.
 Set thinking via `req thinking: aDict`, where the dict is built from
-`ClaudeThinkingParams enabled: aBudget asDictionary`. The request
-serializer reads back into `thinkingParams` and appends a `thinking`
-field to the wire body.
+`(ClaudeThinkingParams adaptiveWithDisplay: aString) asDictionary`.
+The request serializer reads back into `thinkingParams` and appends a
+`thinking` field to the wire body.
 
   ClaudeMessagingThinkingExample buildRequest model
-  >>> 'claude-sonnet-4-6'
+  >>> 'claude-opus-5-5'
 
   ClaudeMessagingThinkingExample buildRequest maxTokens
   >>> 2048
 
   ClaudeMessagingThinkingExample buildRequest thinkingParams type
-  >>> 'enabled'
+  >>> 'adaptive'
 
-  ClaudeMessagingThinkingExample buildRequest thinkingParams budgetTokens
-  >>> 1024
+  ClaudeMessagingThinkingExample buildRequest thinkingParams display
+  >>> 'summarized'
 
 "
 Class {
@@ -51,17 +51,15 @@ Class {
 
 { #category : 'building' }
 ClaudeMessagingThinkingExample class >> buildRequest [
-	"Build a ClaudeMessageRequest that enables extended thinking with a
-	 1024-token budget and asks a reasoning-heavy question. The response
-	 will carry at least one ClaudeThinkingBlock alongside the assistant's
-	 final text. maxTokens is set to 2048 so budget (1024) + final answer
-	 (up to ~1024) both fit within Anthropic's max_tokens > budget_tokens
-	 constraint."
+	"Build a ClaudeMessageRequest that turns on adaptive thinking with a
+	 summarized display and asks a reasoning-heavy question. The response
+	 will carry at least one ClaudeThinkingBlock with readable text
+	 alongside the assistant's final text."
 	| req |
 	req := ClaudeMessageRequest new.
 	req model: ClaudeModel opus55.
 	req maxTokens: 2048.
-	req thinking: (ClaudeThinkingParams enabled: 1024) asDictionary.
+	req thinking: (ClaudeThinkingParams adaptiveWithDisplay: 'summarized') asDictionary.
 	req addUserMessage:
 		'What is the Monty Hall problem? Show your reasoning step by step, then give the final answer.'.
 	^ req

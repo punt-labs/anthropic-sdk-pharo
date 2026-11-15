@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-15
+
 ### Added
 
 - `ClaudeModel default` selector, returning the recommended default model
@@ -14,6 +16,10 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The thinking examples use adaptive thinking instead of a fixed
+  `budget_tokens` budget, which the Claude 5 models reject with a 400.
+  `ClaudeMessagingThinkingExample` sets `display: summarized` so the
+  response carries readable thinking text.
 - Refreshed the `ClaudeModel` catalog to the Claude 5 family: `fable52`,
   `opus55` (the default), `opus5`, `sonnet55`, `sonnet5`, `haiku55`, plus
   `opus48` retained from the prior generation. All examples and tests now
