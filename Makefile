@@ -223,7 +223,7 @@ lint:
 
 # Mirrors the `docs` CI job (.github/workflows/docs.yml): markdownlint-cli2
 # over **/*.md. The root .markdownlint-cli2.jsonc supplies the ignore set
-# (.beads/, .claude/, .tmp/, resume-*.md, docs/resumes/) automatically.
+# (.claude/, .tmp/, resume-*.md, docs/resumes/) automatically.
 # Runs locally so contributors catch findings before the CI gate does.
 lint-md:
 	@echo ">> Linting markdown (**/*.md)..."

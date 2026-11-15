@@ -9,11 +9,10 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Linear is the tracker of record (Punt Labs team, label `repo:aspharo`);
-  beads is a scoped local mirror. `.beads/config.yaml` carries
-  `issue-prefix` and `linear.pull_label`, the punt-kit tracker guide is
-  deposited at `.punt-labs/punt/CLAUDE.md`, and the agent instructions no
-  longer tell a session to run `bd sync` or edit beads locally.
+- Removed the beads (`bd`) tracker; Linear is the sole tracker of record
+  (Punt Labs team, label `repo:aspharo`). Deleted `.beads/`, the
+  `BEADS_DOLT_*` block in `.envrc`, and the `bd` agent instructions; the
+  punt-kit tracker guide at `.punt-labs/punt/CLAUDE.md` is Linear-only.
 - Dropped the retired `punt-labs/team` registry submodule at
   `.punt-labs/ethos`; ethos resolves identities from the global store.
 

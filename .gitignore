@@ -29,8 +29,9 @@ PharoDebug.log
 # Claude Code scheduler runtime lock (machine-local, transient)
 .claude/scheduled_tasks.lock
 
-# Stray beads embedded-dolt dir created in the wrong place;
-# the real beads config is the top-level .beads/ (server mode)
+# Retired beads tracker state (Linear is the tracker of record) and
+# the stray embedded-dolt dir it once created
+.beads/
 aspharo/
 
 # Quarry session-transcript captures (pkit-kcps)
