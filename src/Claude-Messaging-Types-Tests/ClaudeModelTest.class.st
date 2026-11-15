@@ -9,56 +9,46 @@ Class {
 }
 
 { #category : 'tests' }
-ClaudeModelTest >> testHaiku35 [
-	self assert: ClaudeModel haiku35 equals: 'claude-3-haiku-20240307'
+ClaudeModelTest >> testDefault [
+	self assert: ClaudeModel default equals: 'claude-opus-5-5'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testHaiku45 [
-	self assert: ClaudeModel haiku45 equals: 'claude-haiku-4-5-20251001'
+ClaudeModelTest >> testDefaultIsOpus55 [
+	self assert: ClaudeModel default equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus4 [
-	self assert: ClaudeModel opus4 equals: 'claude-opus-4-20250514'
+ClaudeModelTest >> testFable52 [
+	self assert: ClaudeModel fable52 equals: 'claude-fable-5-2'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus46 [
-	self assert: ClaudeModel opus46 equals: 'claude-opus-4-6'
+ClaudeModelTest >> testHaiku55 [
+	self assert: ClaudeModel haiku55 equals: 'claude-haiku-5-5'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus46v [
-	self assert: ClaudeModel opus46v equals: 'claude-opus-4-6'
+ClaudeModelTest >> testOpus48 [
+	self assert: ClaudeModel opus48 equals: 'claude-opus-4-8'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus47 [
-	self assert: ClaudeModel opus47 equals: 'claude-opus-4-7'
+ClaudeModelTest >> testOpus5 [
+	self assert: ClaudeModel opus5 equals: 'claude-opus-5'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus47v [
-	self assert: ClaudeModel opus47v equals: 'claude-opus-4-7'
+ClaudeModelTest >> testOpus55 [
+	self assert: ClaudeModel opus55 equals: 'claude-opus-5-5'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testOpus4v [
-	self assert: ClaudeModel opus4v equals: 'claude-opus-4-20250514'
+ClaudeModelTest >> testSonnet5 [
+	self assert: ClaudeModel sonnet5 equals: 'claude-sonnet-5'
 ]
 
 { #category : 'tests' }
-ClaudeModelTest >> testSonnet45 [
-	self assert: ClaudeModel sonnet45 equals: 'claude-sonnet-4-5-20250929'
-]
-
-{ #category : 'tests' }
-ClaudeModelTest >> testSonnet45v [
-	self assert: ClaudeModel sonnet45v equals: 'claude-sonnet-4-5-20250929'
-]
-
-{ #category : 'tests' }
-ClaudeModelTest >> testSonnet46 [
-	self assert: ClaudeModel sonnet46 equals: 'claude-sonnet-4-6'
+ClaudeModelTest >> testSonnet55 [
+	self assert: ClaudeModel sonnet55 equals: 'claude-sonnet-5-5'
 ]

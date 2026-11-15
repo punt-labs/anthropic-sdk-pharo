@@ -35,7 +35,7 @@ ClaudeMessageDecompositionIntegrationTest >> buildSimpleRequest [
 	 on the normal end_turn path, not about the content."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 50.
 	req addUserMessage: 'What is 2+2? Reply with just the number.'.
 	^ req

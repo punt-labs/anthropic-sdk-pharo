@@ -40,7 +40,7 @@ ClaudeMessagingExamplesTest >> testInterleavedThinkingExampleStructure [
 	 preserves the placeholder signatures byte-for-byte."
 	| request json msgArr asst1 asst2 |
 	request := ClaudeInterleavedThinkingExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46.
+	self assert: request model equals: ClaudeModel opus55.
 	self assert: request maxTokens equals: 2048.
 	self assert: request messages size equals: 5.
 	self assert: request requestOptions betas first
@@ -68,7 +68,7 @@ ClaudeMessagingExamplesTest >> testOutputFormatExampleConfiguresFormat [
 	 on the request and the schema requires name + age."
 	| request format |
 	request := ClaudeMessagingOutputFormatExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46.
+	self assert: request model equals: ClaudeModel opus55.
 	format := request outputFormat.
 	self assert: (format isKindOf: ClaudeJsonSchemaOutputFormat).
 	self assert: (format schema properties includesKey: 'name').
@@ -80,10 +80,10 @@ ClaudeMessagingExamplesTest >> testOutputFormatExampleConfiguresFormat [
 { #category : 'tests' }
 ClaudeMessagingExamplesTest >> testRawStreamingExampleBuildsRequest [
 	"Verify the RawStreamingExample produces a streaming-enabled
-	 request with the canonical sonnet46 model."
+	 request with the canonical opus55 model."
 	| request |
 	request := ClaudeMessagingRawStreamingExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46.
+	self assert: request model equals: ClaudeModel opus55.
 	self assert: request stream.
 	self assert: request maxTokens equals: 50.
 	self assert: request messages size equals: 1
@@ -95,7 +95,7 @@ ClaudeMessagingExamplesTest >> testRequestOptionsExampleConfiguresOptions [
 	 serviceTier on requestOptions."
 	| request options |
 	request := ClaudeMessagingRequestOptionsExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46.
+	self assert: request model equals: ClaudeModel opus55.
 	options := request requestOptions.
 	self assert: options serviceTier equals: 'auto'.
 	self assert: (options metadata at: 'user_id') equals: 'sdk-test-user'

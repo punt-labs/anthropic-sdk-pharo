@@ -59,7 +59,7 @@ ClaudeMessagingThinkingExample class >> buildRequest [
 	 constraint."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 2048.
 	req thinking: (ClaudeThinkingParams enabled: 1024) asDictionary.
 	req addUserMessage:

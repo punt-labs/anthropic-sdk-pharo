@@ -142,7 +142,7 @@ ClaudeClientTest >> testNewHttpClientForIncludesBetaHeader [
 	| client params http |
 	client := ClaudeClient apiKey: 'sk-test'.
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet45.
+	params model: ClaudeModel opus55.
 	params maxTokens: 100.
 	params addUserMessage: 'test'.
 	params betas: #('pdfs-2024-09-25' 'output-128k-2025-02-19').
@@ -155,7 +155,7 @@ ClaudeClientTest >> testNewHttpClientForOmitsBetaHeaderWhenNoBetas [
 	| client params http |
 	client := ClaudeClient apiKey: 'sk-test'.
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet45.
+	params model: ClaudeModel opus55.
 	params maxTokens: 100.
 	params addUserMessage: 'test'.
 	http := client newHttpClientFor: params.

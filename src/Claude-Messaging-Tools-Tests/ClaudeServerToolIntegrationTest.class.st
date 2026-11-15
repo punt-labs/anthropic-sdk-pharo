@@ -6,7 +6,7 @@ rather than failing -- a key-less image (CI fork PR, fresh dev box) is not a red
 
 These tests are excluded from ``make test``; they run via ``ClaudeMessagingTestSuite
 fullSuite`` in the slow-suite workflow. Tests are parameterized across models
-(opus46, sonnet46) for multi-model coverage. Each server tool has one test per model,
+(opus55, sonnet55) for multi-model coverage. Each server tool has one test per model,
 with shared helper methods for the common assertion logic.
 
 Run manually when validating server tool end-to-end behavior:
@@ -28,7 +28,7 @@ Class {
 { #category : 'configuration' }
 ClaudeServerToolIntegrationTest class >> testModels [
   "Models to test for multi-model coverage."
-  ^ { ClaudeModel opus46. ClaudeModel sonnet46 }
+  ^ { ClaudeModel opus55. ClaudeModel sonnet55 }
 ]
 
 { #category : 'helpers' }
@@ -172,97 +172,97 @@ ClaudeServerToolIntegrationTest >> tearDown [
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testBashExecutesCommandOpus [
   <timeout: 60>
-  self assertBashWorksOn: ClaudeModel opus46
+  self assertBashWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testBashExecutesCommandSonnet [
   <timeout: 60>
-  self assertBashWorksOn: ClaudeModel sonnet46
+  self assertBashWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testCodeExecutionReturnsOutputOpus [
   <timeout: 120>
-  self assertCodeExecutionWorksOn: ClaudeModel opus46
+  self assertCodeExecutionWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testCodeExecutionReturnsOutputSonnet [
   <timeout: 120>
-  self assertCodeExecutionWorksOn: ClaudeModel sonnet46
+  self assertCodeExecutionWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testMemoryStoresInformationOpus [
   <timeout: 60>
-  self assertMemoryWorksOn: ClaudeModel opus46
+  self assertMemoryWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testMemoryStoresInformationSonnet [
   <timeout: 60>
-  self assertMemoryWorksOn: ClaudeModel sonnet46
+  self assertMemoryWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testTextEditorEditsFileOpus [
   <timeout: 60>
-  self assertTextEditorWorksOn: ClaudeModel opus46
+  self assertTextEditorWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testTextEditorEditsFileSonnet [
   <timeout: 60>
-  self assertTextEditorWorksOn: ClaudeModel sonnet46
+  self assertTextEditorWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testToolSearchBm25FindsToolsOpus [
   <timeout: 60>
-  self assertToolSearchBm25WorksOn: ClaudeModel opus46
+  self assertToolSearchBm25WorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testToolSearchBm25FindsToolsSonnet [
   <timeout: 60>
-  self assertToolSearchBm25WorksOn: ClaudeModel sonnet46
+  self assertToolSearchBm25WorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testToolSearchRegexFindsToolsOpus [
   <timeout: 60>
-  self assertToolSearchRegexWorksOn: ClaudeModel opus46
+  self assertToolSearchRegexWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testToolSearchRegexFindsToolsSonnet [
   <timeout: 60>
-  self assertToolSearchRegexWorksOn: ClaudeModel sonnet46
+  self assertToolSearchRegexWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testWebFetchRetrievesPageOpus [
   <timeout: 120>
-  self assertWebFetchWorksOn: ClaudeModel opus46
+  self assertWebFetchWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testWebFetchRetrievesPageSonnet [
   <timeout: 120>
-  self assertWebFetchWorksOn: ClaudeModel sonnet46
+  self assertWebFetchWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testWebSearchReturnsResultsOpus [
   <timeout: 120>
-  self assertWebSearchWorksOn: ClaudeModel opus46
+  self assertWebSearchWorksOn: ClaudeModel opus55
 ]
 
 { #category : 'tests-integration' }
 ClaudeServerToolIntegrationTest >> testWebSearchReturnsResultsSonnet [
   <timeout: 120>
-  self assertWebSearchWorksOn: ClaudeModel sonnet46
+  self assertWebSearchWorksOn: ClaudeModel sonnet55
 ]
 
 { #category : 'helpers' }

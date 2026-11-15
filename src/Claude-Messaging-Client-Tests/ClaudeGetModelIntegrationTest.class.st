@@ -57,13 +57,13 @@ ClaudeGetModelIntegrationTest >> testGetModelReturnsModelInfoForKnownId [
 	    caught by a typed-parse regression on the field)
 	 listModels is already covered by ClaudeIntegrationTest >>
 	 testListModels; this test closes the getModel: gap.
-	 Uses ClaudeModel sonnet46 ('claude-sonnet-4-6') to stay in sync
+	 Uses ClaudeModel opus55 ('claude-sonnet-4-6') to stay in sync
 	 with the rest of the examples.
 	 Skips cleanly when no API key is present."
 	| client modelId info |
 	client := [ ClaudeSDKExampleSupport resolveClient ]
 		on: Error do: [ :e | ^ self skip ].
-	modelId := ClaudeModel sonnet46.
+	modelId := ClaudeModel opus55.
 	ClaudeTestLog log: '>> getModel ' , modelId printString.
 	info := client getModel: modelId.
 	ClaudeTestLog log: '<< displayName=' , info displayName printString , ' type=' , info type printString.

@@ -1,31 +1,42 @@
 "
 Model ID constants for the Claude API. Class-side factory methods return model identifier strings.
 
-haiku35 - Claude 3 Haiku (oldest, cheapest)
-haiku45 - Claude 4.5 Haiku
-sonnet45 / sonnet45v - Claude Sonnet 4.5 (versioned)
-sonnet46 - Claude Sonnet 4.6 (latest Sonnet alias)
-opus4 / opus4v - Claude Opus 4 (versioned)
-opus46 / opus46v - Claude Opus 4.6
-opus47 / opus47v - Claude Opus 4.7 (latest Opus alias)
+The Claude 5 family (current generation) plus Opus 4.8, the one prior-generation
+model kept for callers that still pin it. Earlier 4.x and Claude 3 selectors were
+removed in the Claude 5 refresh.
+
+default  - alias for the recommended default, claude-opus-5-5
+fable52  - Claude Fable 5.2 (most capable)
+opus55   - Claude Opus 5.5 (the default)
+opus5    - Claude Opus 5
+opus48   - Claude Opus 4.8 (prior generation, retained)
+sonnet55 - Claude Sonnet 5.5
+sonnet5  - Claude Sonnet 5
+haiku55  - Claude Haiku 5.5
+
+Model IDs are undated — the Anthropic API resolves the current snapshot, and
+appending a date suffix is wrong for these IDs.
 
 Example:
-  ClaudeModel opus47 ""=> claude-opus-4-7""
+  ClaudeModel opus55 ""=> claude-opus-5-5""
 
 ### Examples
 
 ```
-ClaudeModel opus47
->>> 'claude-opus-4-7'
+ClaudeModel default
+>>> 'claude-opus-5-5'
 
-ClaudeModel opus46
->>> 'claude-opus-4-6'
+ClaudeModel opus55
+>>> 'claude-opus-5-5'
 
-ClaudeModel sonnet46
->>> 'claude-sonnet-4-6'
+ClaudeModel sonnet55
+>>> 'claude-sonnet-5-5'
 
-ClaudeModel haiku45
->>> 'claude-haiku-4-5-20251001'
+ClaudeModel haiku55
+>>> 'claude-haiku-5-5'
+
+ClaudeModel fable52
+>>> 'claude-fable-5-2'
 ```
 
 "
@@ -37,66 +48,49 @@ Class {
 }
 
 { #category : 'models' }
-ClaudeModel class >> haiku35 [
-	"Claude 3 Haiku -- cheapest, fastest"
-	^ 'claude-3-haiku-20240307'
+ClaudeModel class >> default [
+	"The recommended default model — Claude Opus 5.5."
+	^ self opus55
 ]
 
 { #category : 'models' }
-ClaudeModel class >> haiku45 [
-	"Claude Haiku 4.5"
-	^ 'claude-haiku-4-5-20251001'
+ClaudeModel class >> fable52 [
+	"Claude Fable 5.2 — most capable"
+	^ 'claude-fable-5-2'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus4 [
-	"Claude Opus 4"
-	^ 'claude-opus-4-20250514'
+ClaudeModel class >> haiku55 [
+	"Claude Haiku 5.5"
+	^ 'claude-haiku-5-5'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus46 [
-	"Claude Opus 4.6"
-	^ 'claude-opus-4-6'
+ClaudeModel class >> opus48 [
+	"Claude Opus 4.8 — prior generation, retained for callers that pin it"
+	^ 'claude-opus-4-8'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus46v [
-	"Claude Opus 4.6 (versioned -- same as alias until date-versioned ID is published)"
-	^ 'claude-opus-4-6'
+ClaudeModel class >> opus5 [
+	"Claude Opus 5"
+	^ 'claude-opus-5'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus47 [
-	"Claude Opus 4.7 -- latest Opus"
-	^ 'claude-opus-4-7'
+ClaudeModel class >> opus55 [
+	"Claude Opus 5.5 — the default model"
+	^ 'claude-opus-5-5'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus47v [
-	"Claude Opus 4.7 (versioned -- same as alias until date-versioned ID is published)"
-	^ 'claude-opus-4-7'
+ClaudeModel class >> sonnet5 [
+	"Claude Sonnet 5"
+	^ 'claude-sonnet-5'
 ]
 
 { #category : 'models' }
-ClaudeModel class >> opus4v [
-	"Claude Opus 4 (versioned)"
-	^ 'claude-opus-4-20250514'
-]
-
-{ #category : 'models' }
-ClaudeModel class >> sonnet45 [
-	"Claude Sonnet 4.5"
-	^ 'claude-sonnet-4-5-20250929'
-]
-
-{ #category : 'models' }
-ClaudeModel class >> sonnet45v [
-	^ 'claude-sonnet-4-5-20250929'
-]
-
-{ #category : 'models' }
-ClaudeModel class >> sonnet46 [
-	"Claude Sonnet 4.6 -- latest Sonnet"
-	^ 'claude-sonnet-4-6'
+ClaudeModel class >> sonnet55 [
+	"Claude Sonnet 5.5"
+	^ 'claude-sonnet-5-5'
 ]

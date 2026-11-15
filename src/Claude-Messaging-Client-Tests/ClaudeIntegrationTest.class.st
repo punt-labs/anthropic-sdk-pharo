@@ -5,8 +5,8 @@ env var second). When neither is present, ``setUp`` skips cleanly via ``self ski
 rather than failing -- a key-less image (CI fork PR, fresh dev box) is not a red.
 
 These tests are excluded from ``make test``; they run via ``ClaudeMessagingTestSuite
-fullSuite`` in the slow-suite workflow. Rotates across current-catalog models
-(opus47, opus46, sonnet46) with low ``maxTokens`` to minimise cost.
+fullSuite`` in the slow-suite workflow. They run against ``ClaudeModel default``
+with low ``maxTokens`` to minimise cost.
 
   ClaudeIntegrationTest buildSuite run
   >>> a TestResult
@@ -23,27 +23,15 @@ Class {
 }
 
 { #category : 'private' }
-ClaudeIntegrationTest >> modelOpus46 [
-	"Current-catalog Opus 4.6 identifier for integration tests"
-	^ ClaudeModel opus46
-]
-
-{ #category : 'private' }
-ClaudeIntegrationTest >> modelOpus47 [
-	"Current-catalog Opus 4.7 identifier for integration tests"
-	^ ClaudeModel opus47
-]
-
-{ #category : 'private' }
-ClaudeIntegrationTest >> modelSonnet46 [
-	"Current-catalog Sonnet 4.6 identifier for integration tests"
-	^ ClaudeModel sonnet46
+ClaudeIntegrationTest >> model [
+	"The model all integration tests run against — the current default."
+	^ ClaudeModel default
 ]
 
 { #category : 'private' }
 ClaudeIntegrationTest >> newParams: prompt maxTokens: max [
-	"Default model for tests that don't specify one. Uses Sonnet 4.6 as the lowest-cost current model."
-	^ self newParams: prompt maxTokens: max model: self modelSonnet46
+	"Default model for tests that don't specify one."
+	^ self newParams: prompt maxTokens: max model: self model
 ]
 
 { #category : 'private' }
@@ -83,7 +71,7 @@ ClaudeIntegrationTest >> tearDown [
 { #category : 'tests-integration' }
 ClaudeIntegrationTest >> testCountTokens [
 	| params result |
-	params := self newParams: 'Hello' maxTokens: 50 model: self modelOpus46.
+	params := self newParams: 'Hello' maxTokens: 50 model: self model.
 	ClaudeTestLog log: '>> testCountTokens: counting tokens...'.
 	result := client countTokens: params.
 	ClaudeTestLog log: '<< Token count: ' , result inputTokens printString , ' input tokens'.
@@ -136,7 +124,7 @@ ClaudeIntegrationTest >> testListModels [
 { #category : 'tests-integration' }
 ClaudeIntegrationTest >> testMultiTurnConversation [
 	| params firstResponse secondResponse |
-	params := self newParams: 'What is 2+2? Reply with just the number.' maxTokens: 50 model: self modelSonnet46.
+	params := self newParams: 'What is 2+2? Reply with just the number.' maxTokens: 50 model: self model.
 	ClaudeTestLog log: '>> testMultiTurnConversation: sending first turn...'.
 	firstResponse := client sendMessage: params.
 	ClaudeTestLog log: '<< Turn 1: ' , firstResponse textContent size printString , ' chars, ' , firstResponse usage inputTokens printString , ' in / ' , firstResponse usage outputTokens printString , ' out tokens'.
@@ -162,7 +150,7 @@ ClaudeIntegrationTest >> testRealStreamingClose [
 			'content-type'. 'application/json'.
 			'accept'. 'text/event-stream' })
 		body: (STONJSON toString: {
-			'model' -> 'claude-sonnet-4-6'.
+			'model' -> ClaudeModel default.
 			'max_tokens' -> 20.
 			'stream' -> true.
 			'messages' -> { { 'role' -> 'user'. 'content' -> 'Hi' } asDictionary }
@@ -191,7 +179,7 @@ ClaudeIntegrationTest >> testRealStreamingConnection [
 			'content-type'. 'application/json'.
 			'accept'. 'text/event-stream' })
 		body: (STONJSON toString: {
-			'model' -> 'claude-sonnet-4-6'.
+			'model' -> ClaudeModel default.
 			'max_tokens' -> 20.
 			'stream' -> true.
 			'messages' -> { { 'role' -> 'user'. 'content' -> 'Hi' } asDictionary }
@@ -214,7 +202,7 @@ ClaudeIntegrationTest >> testRealStreamingErrorHandling [
 	badClient := ClaudeClient apiKey: 'sk-invalid'.
 	badClient streamingTimeout: 30.
 	params := ClaudeMessageRequest new.
-	params model: 'claude-sonnet-4-6'.
+	params model: ClaudeModel default.
 	params maxTokens: 50.
 	params addUserMessage: 'Hello'.
 	ClaudeTestLog log: '>> streaming with invalid key, expecting ClaudeApiError'.
@@ -237,7 +225,7 @@ ClaudeIntegrationTest >> testRealStreamingEvents [
 			'content-type'. 'application/json'.
 			'accept'. 'text/event-stream' })
 		body: (STONJSON toString: {
-			'model' -> 'claude-sonnet-4-6'.
+			'model' -> ClaudeModel default.
 			'max_tokens' -> 50.
 			'stream' -> true.
 			'messages' -> { { 'role' -> 'user'. 'content' -> 'Say hi in 3 words' } asDictionary }
@@ -272,7 +260,7 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 	"Verify streamMessage:do: uses real TLS streaming for HTTPS base URL."
 	| params events message |
 	params := ClaudeMessageRequest new.
-	params model: 'claude-sonnet-4-6'.
+	params model: ClaudeModel default.
 	params maxTokens: 50.
 	params addUserMessage: 'Reply with exactly: streaming works'.
 	events := OrderedCollection new.
@@ -294,7 +282,7 @@ ClaudeIntegrationTest >> testRealStreamingViaClient [
 { #category : 'tests-integration' }
 ClaudeIntegrationTest >> testSendMessage [
 	| params response |
-	params := self newParams: 'Reply with exactly: hello' maxTokens: 50 model: self modelOpus47.
+	params := self newParams: 'Reply with exactly: hello' maxTokens: 50 model: self model.
 	ClaudeTestLog log: '>> testSendMessage: sending to ' , client baseUrl.
 	response := client sendMessage: params.
 	ClaudeTestLog log: '<< Response: ' , response textContent size printString , ' chars, ' , response usage inputTokens printString , ' in / ' , response usage outputTokens printString , ' out tokens'.
@@ -308,7 +296,7 @@ ClaudeIntegrationTest >> testSendMessage [
 { #category : 'tests-integration' }
 ClaudeIntegrationTest >> testStreamMessage [
 	| params events message |
-	params := self newParams: 'Reply with exactly: hi' maxTokens: 50 model: self modelOpus46.
+	params := self newParams: 'Reply with exactly: hi' maxTokens: 50 model: self model.
 	ClaudeTestLog log: '>> testStreamMessage: streaming...'.
 	events := OrderedCollection new.
 	message := client streamMessage: params do: [ :event |

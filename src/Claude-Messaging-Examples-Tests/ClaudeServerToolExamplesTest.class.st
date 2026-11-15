@@ -1,7 +1,7 @@
 "
 Structural tests for the server-tool example classes (web search, web fetch, code execution, bash, text editor, memory, tool search BM25 + regex) plus the MCP and Skills examples. Each test verifies request construction without making API calls — the live wire behaviour lives in `ClaudeServerToolIntegrationTest` (out of scope for `make test`).
 
-Two tests per server-tool example class assert (a) the right tool class is configured and (b) the request uses the canonical `ClaudeModel sonnet46`. The tool-search example carries a third assertion verifying its regex-variant entry point.
+Two tests per server-tool example class assert (a) the right tool class is configured and (b) the request uses the canonical `ClaudeModel opus55`. The tool-search example carries a third assertion verifying its regex-variant entry point.
 
   ClaudeServerToolExamplesTest buildSuite tests size
   >>> 20
@@ -27,7 +27,7 @@ ClaudeServerToolExamplesTest >> testBashExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testBashExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingBashExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -43,7 +43,7 @@ ClaudeServerToolExamplesTest >> testCodeExecutionExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testCodeExecutionExampleUsesCorrectModel [
 	| request |
 	request := ClaudeCodeExecutionExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -68,7 +68,7 @@ ClaudeServerToolExamplesTest >> testMCPExampleSetsBetaHeader [
 ClaudeServerToolExamplesTest >> testMCPExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingMCPExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -84,7 +84,7 @@ ClaudeServerToolExamplesTest >> testMemoryExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testMemoryExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingMemoryExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -122,7 +122,7 @@ ClaudeServerToolExamplesTest >> testTextEditorExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testTextEditorExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingTextEditorExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -153,7 +153,7 @@ ClaudeServerToolExamplesTest >> testToolSearchExampleProvidesRegexVariant [
 ClaudeServerToolExamplesTest >> testToolSearchExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingToolSearchExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -169,7 +169,7 @@ ClaudeServerToolExamplesTest >> testWebFetchExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testWebFetchExampleUsesCorrectModel [
 	| request |
 	request := ClaudeMessagingWebFetchExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]
 
 { #category : 'tests' }
@@ -185,5 +185,5 @@ ClaudeServerToolExamplesTest >> testWebSearchExampleConfiguresTool [
 ClaudeServerToolExamplesTest >> testWebSearchExampleUsesCorrectModel [
 	| request |
 	request := ClaudeWebSearchExample buildRequest.
-	self assert: request model equals: ClaudeModel sonnet46
+	self assert: request model equals: ClaudeModel opus55
 ]

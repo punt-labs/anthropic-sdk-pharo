@@ -55,7 +55,7 @@ ClaudeSimpleMessageExample class >> runOn: aClient [
 	"Send a single message using the given client. Returns the text content."
 	| params response |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addUserMessage: 'What is the capital of France?'.
 	response := aClient sendMessage: params.

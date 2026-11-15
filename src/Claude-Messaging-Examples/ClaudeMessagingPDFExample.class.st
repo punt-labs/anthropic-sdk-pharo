@@ -76,7 +76,7 @@ ClaudeMessagingPDFExample class >> buildRequest [
 
 	| req documentBlock textBlock |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 512.
 	documentBlock := ClaudeDocumentBlock fromBase64: self examplePDFBase64.
 	textBlock := ClaudeTextBlock

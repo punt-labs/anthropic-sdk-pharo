@@ -5,7 +5,7 @@ A message request to the Claude Messages API. The complete specification of what
 
 ```
 | req |
-req := ClaudeMessageRequest new model: ClaudeModel sonnet46; maxTokens: 100.
+req := ClaudeMessageRequest new model: ClaudeModel opus55; maxTokens: 100.
 req model
 >>> 'claude-sonnet-4-6'
 

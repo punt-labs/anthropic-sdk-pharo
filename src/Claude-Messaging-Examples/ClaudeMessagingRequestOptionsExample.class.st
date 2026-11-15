@@ -47,7 +47,7 @@ ClaudeMessagingRequestOptionsExample class >> buildRequest [
 	 both options cleared server-side validation."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 256.
 	req metadata: (Dictionary newFromPairs: { 'user_id'. 'sdk-test-user' }).
 	req serviceTier: 'auto'.

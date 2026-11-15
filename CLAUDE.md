@@ -289,7 +289,7 @@ comment convention:
   | client params |
   client := ClaudeClient apiKey: 'sk-ant-...'.
   params := ClaudeMessageRequest new
-    model: ClaudeModel sonnet45;
+    model: ClaudeModel default;
     maxTokens: 1024;
     addUserMessage: 'Hello'.
   (client sendMessage: params) textContent

@@ -33,7 +33,7 @@ ClaudeMessagingWebFetchExample class >> buildRequest [
 	 example does not introduce a new external dependency."
 	| params |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addServerTool: ClaudeWebFetchTool new.
 	params addUserMessage: 'Fetch https://httpbin.org/html and tell me what kind of page it is.'.

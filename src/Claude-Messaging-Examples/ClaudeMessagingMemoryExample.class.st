@@ -32,7 +32,7 @@ ClaudeMessagingMemoryExample class >> buildRequest [
 	 Uses an example memory prompt for this runnable sample."
 	| params |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addServerTool: ClaudeMemoryTool new.
 	params addUserMessage: 'Remember that my favorite color is blue, then confirm what you remembered.'.

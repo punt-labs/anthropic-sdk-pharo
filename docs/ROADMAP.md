@@ -24,8 +24,8 @@ of `anthropic-sdk-python`. v0.5.1 renamed the Metacello baseline from
   execution, text editor, memory, computer use
 - **MCP connectors** via the `mcp_servers` field on Messages requests
   (`mcp-client-2025-04-04` beta)
-- **Typed model catalog**: opus47, opus46, opus45, sonnet46, sonnet45,
-  haiku45, haiku35
+- **Typed model catalog**: the Claude 5 family (fable52, opus55, opus5,
+  sonnet55, sonnet5, haiku55) plus opus48, with `default` → opus55
 - **Typed beta-header catalog** (`ClaudeBetaHeader`)
 - **Typed response metadata** (rate-limit and service-tier)
 - **Streaming**: SSE decoder plus raw TLS socket variants

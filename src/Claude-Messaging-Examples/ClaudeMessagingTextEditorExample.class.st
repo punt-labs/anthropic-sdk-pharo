@@ -36,7 +36,7 @@ ClaudeMessagingTextEditorExample class >> buildRequest [
 	 the model can view in a single edit operation) by setting it explicitly."
 	| params editor |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	editor := ClaudeTextEditorTool new.
 	editor maxCharacters: 50000.

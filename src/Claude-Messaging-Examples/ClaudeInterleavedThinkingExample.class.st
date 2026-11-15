@@ -70,7 +70,7 @@ ClaudeInterleavedThinkingExample class >> buildRequest [
 	 ClaudeThinkingBlockTest>>testSignatureRoundTrip."
 	| req turn1 weatherCall turn2 timeCall |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 2048.
 	req thinking: (ClaudeThinkingParams enabled: 1024) asDictionary.
 	req betas: { ClaudeBetaHeader interleavedThinking }.

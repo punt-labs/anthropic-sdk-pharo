@@ -34,7 +34,7 @@ ClaudeTokenCountExample class >> runOn: aClient [
 	"Count tokens using the given client. Returns the input token count as an integer."
 	| params tokenCount |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addUserMessage: 'What is the meaning of life?'.
 	tokenCount := aClient countTokens: params.
