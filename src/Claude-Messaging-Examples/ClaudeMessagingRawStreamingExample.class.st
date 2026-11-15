@@ -34,7 +34,7 @@ ClaudeMessagingRawStreamingExample class >> buildRequest [
 	 content."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 50.
 	req addUserMessage: 'Say hi in 3 words'.
 	req stream: true.

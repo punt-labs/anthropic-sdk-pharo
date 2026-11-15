@@ -32,7 +32,7 @@ ClaudeMessagingBashExample class >> buildRequest [
 	 Mirrors the integration test scenario."
 	| params |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addServerTool: ClaudeBashTool new.
 	params addUserMessage: 'Run `echo hello world` and tell me what it printed.'.

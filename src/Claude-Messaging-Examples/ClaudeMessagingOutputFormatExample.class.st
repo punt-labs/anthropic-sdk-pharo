@@ -45,7 +45,7 @@ ClaudeMessagingOutputFormatExample class >> buildRequest [
 		require: 'age';
 		yourself.
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 256.
 	req outputFormat: (ClaudeJsonSchemaOutputFormat schema: schema).
 	req addUserMessage: 'Give me a person record for Marie Curie.'.

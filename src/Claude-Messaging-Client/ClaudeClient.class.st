@@ -50,7 +50,7 @@ off the returned `ClaudeMessage`:
 | client request response |
 client := ClaudeExampleSupport resolveClient.
 request := ClaudeMessageRequest new
-	model: ClaudeModel opus46;
+	model: ClaudeModel opus55;
 	maxTokens: 1024;
 	addUserMessage: 'Write a haiku about Smalltalk.';
 	yourself.
@@ -73,7 +73,7 @@ returns the fully accumulated `ClaudeMessage` after the stream closes.
 | client request final |
 client := ClaudeExampleSupport resolveClient.
 request := ClaudeMessageRequest new
-	model: ClaudeModel opus46;
+	model: ClaudeModel opus55;
 	maxTokens: 1024;
 	addUserMessage: 'Count to five.';
 	yourself.
@@ -99,7 +99,7 @@ the same request shape as `sendMessage:` but returns only
 | client request count |
 client := ClaudeExampleSupport resolveClient.
 request := ClaudeMessageRequest new
-	model: ClaudeModel opus46;
+	model: ClaudeModel opus55;
 	maxTokens: 1024;
 	addUserMessage: 'Explain monads.';
 	yourself.
@@ -138,7 +138,7 @@ a raw base64 string, or a live `Form`:
 | client request response |
 client := ClaudeExampleSupport resolveClient.
 request := ClaudeMessageRequest new
-	model: ClaudeModel opus46;
+	model: ClaudeModel opus55;
 	maxTokens: 1024;
 	yourself.
 request
@@ -266,7 +266,7 @@ instance so you can dispatch on class when you need to.
 | client request |
 client := ClaudeExampleSupport resolveClient.
 request := ClaudeMessageRequest new
-	model: ClaudeModel opus46;
+	model: ClaudeModel opus55;
 	maxTokens: 100;
 	addUserMessage: 'Hello';
 	yourself.

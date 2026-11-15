@@ -52,7 +52,7 @@ ClaudeStreamingExample class >> runOn: aClient [
 	"Stream a response using the given client. Returns the accumulated ClaudeMessage."
 	| params events message |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addUserMessage: 'Write a haiku about Smalltalk.'.
 	events := OrderedCollection new.

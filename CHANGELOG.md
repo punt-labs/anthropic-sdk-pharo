@@ -7,14 +7,31 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `ClaudeModel default` selector, returning the recommended default model
+  (`claude-opus-5-5`), so callers stop pinning a specific version.
+
 ### Changed
 
+- Refreshed the `ClaudeModel` catalog to the Claude 5 family: `fable52`,
+  `opus55` (the default), `opus5`, `sonnet55`, `sonnet5`, `haiku55`, plus
+  `opus48` retained from the prior generation. All examples and tests now
+  target the current models; integration tests run against `ClaudeModel
+  default`.
 - Removed the beads (`bd`) tracker; Linear is the sole tracker of record
   (Punt Labs team, label `repo:aspharo`). Deleted `.beads/`, the
   `BEADS_DOLT_*` block in `.envrc`, and the `bd` agent instructions; the
   punt-kit tracker guide at `.punt-labs/punt/CLAUDE.md` is Linear-only.
 - Dropped the retired `punt-labs/team` registry submodule at
   `.punt-labs/ethos`; ethos resolves identities from the global store.
+
+### Removed
+
+- The superseded `ClaudeModel` selectors `haiku35`, `haiku45`, `opus4`,
+  `opus4v`, `opus46`, `opus46v`, `opus47`, `opus47v`, `sonnet45`,
+  `sonnet45v`, and `sonnet46`. Callers pinning these must move to a Claude 5
+  selector or `opus48`.
 
 ## [0.7.0] - 2026-07-12
 

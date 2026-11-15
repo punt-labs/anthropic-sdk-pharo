@@ -31,7 +31,7 @@ ClaudeCodeExecutionExample class >> buildRequest [
 	"Build a message request with ClaudeCodeExecutionTool configured."
 	| params |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addServerTool: ClaudeCodeExecutionTool new.
 	params addUserMessage: 'Calculate the first 10 prime numbers using Python.'.

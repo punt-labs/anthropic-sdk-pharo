@@ -75,7 +75,7 @@ ClaudeMessagingPromptCachingExample class >> buildRequestWithSalt: aString [
 	 with a cache_control field in JSON."
 	| req block text |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 256.
 	text := 'Run ID: ' , aString , String lf , String lf , self longCachedSystemText.
 	block := ClaudeTextBlock text: text.

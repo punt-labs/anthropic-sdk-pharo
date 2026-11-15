@@ -31,7 +31,7 @@ ClaudeWebSearchExample class >> buildRequest [
 	"Build a message request with ClaudeWebSearchTool configured."
 	| params |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addServerTool: ClaudeWebSearchTool new.
 	params addUserMessage: 'What is the current population of Tokyo?'.

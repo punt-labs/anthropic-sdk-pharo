@@ -39,14 +39,14 @@ ClaudeMessagingBatchesExample class >> buildSampleCreateParams [
 	params addRequest: (ClaudeBatchRequest
 		customId: 'r-1'
 		params: (ClaudeMessageRequest new
-			model: ClaudeModel haiku45;
+			model: ClaudeModel haiku55;
 			maxTokens: 64;
 			addUserMessage: 'Say hello in one short sentence.';
 			yourself)).
 	params addRequest: (ClaudeBatchRequest
 		customId: 'r-2'
 		params: (ClaudeMessageRequest new
-			model: ClaudeModel haiku45;
+			model: ClaudeModel haiku55;
 			maxTokens: 64;
 			addUserMessage: 'Name one primary color in one word.';
 			yourself)).

@@ -33,7 +33,7 @@ ClaudeMessagingBatchesExampleTest >> testBuildSampleCreateParamsAsJsonRoundTrip 
 	first := requestsArr first.
 	self assert: (first at: 'custom_id') equals: 'r-1'.
 	self assert: ((first at: 'params') at: 'messages') notEmpty.
-	self assert: ((first at: 'params') at: 'model') equals: 'claude-haiku-4-5-20251001'.
+	self assert: ((first at: 'params') at: 'model') equals: ClaudeModel haiku55.
 	self assert: ((requestsArr second) at: 'custom_id') equals: 'r-2'
 ]
 
@@ -53,9 +53,9 @@ ClaudeMessagingBatchesExampleTest >> testBuildSampleCreateParamsUsesHaikuAndSmal
 	| params first |
 	params := ClaudeMessagingBatchesExample buildSampleCreateParams.
 	first := params requests first.
-	self assert: first params model equals: ClaudeModel haiku45.
+	self assert: first params model equals: ClaudeModel haiku55.
 	self assert: first params maxTokens equals: 64.
-	self assert: params requests second params model equals: ClaudeModel haiku45.
+	self assert: params requests second params model equals: ClaudeModel haiku55.
 	self assert: params requests second params maxTokens equals: 64
 ]
 

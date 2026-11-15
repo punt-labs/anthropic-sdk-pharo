@@ -34,7 +34,7 @@ ClaudeMultiTurnExample class >> runOn: aClient [
 	"Run a multi-turn conversation using the given client. Returns the final response text."
 	| params firstResponse secondResponse |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params addUserMessage: 'What is the capital of France?'.
 	firstResponse := aClient sendMessage: params.

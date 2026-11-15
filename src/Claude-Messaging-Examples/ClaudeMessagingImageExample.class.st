@@ -58,7 +58,7 @@ ClaudeMessagingImageExample class >> buildRequest [
 
 	| req imageBlock textBlock |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 512.
 	imageBlock := ClaudeImageBlock fromUrl: self exampleImageUrl.
 	textBlock := ClaudeTextBlock

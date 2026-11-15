@@ -28,7 +28,7 @@ ClaudeMessagingMCPExample class >> buildRequest [
 	 The user opts in by setting both betas: and mcpServers: explicitly."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 1024.
 	req betas: #('mcp-client-2025-04-04').
 	req mcpServers: { self exampleServer }.

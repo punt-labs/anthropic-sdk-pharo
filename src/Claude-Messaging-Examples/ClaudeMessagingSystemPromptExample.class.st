@@ -45,7 +45,7 @@ ClaudeMessagingSystemPromptExample class >> buildRequest [
 	 prompt reached the model."
 	| req |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 256.
 	req system: 'You must end every response with the exact marker text MKR-%%%.'.
 	req addUserMessage: 'What is 2 + 2?'.

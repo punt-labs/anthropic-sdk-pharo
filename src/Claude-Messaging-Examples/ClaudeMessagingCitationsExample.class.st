@@ -55,7 +55,7 @@ ClaudeMessagingCitationsExample class >> buildRequest [
 	 document by index and character range."
 	| req documentBlock textBlock |
 	req := ClaudeMessageRequest new.
-	req model: ClaudeModel sonnet46.
+	req model: ClaudeModel opus55.
 	req maxTokens: 1024.
 	documentBlock := ClaudeDocumentBlock fromText: self researchDocumentText.
 	documentBlock title: 'Research Memo on Pharo Image Discipline'.

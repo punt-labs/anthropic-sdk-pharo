@@ -42,7 +42,7 @@ ClaudeMessagingToolSearchExample class >> buildRegexRequest [
 	 by regex pattern instead of BM25 ranking."
 	| params searchTool |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params tools: self fixtureClientTools.
 	searchTool := ClaudeToolSearchRegexTool new.
@@ -59,7 +59,7 @@ ClaudeMessagingToolSearchExample class >> buildRequest [
 	 BM25 search has candidates to rank."
 	| params searchTool |
 	params := ClaudeMessageRequest new.
-	params model: ClaudeModel sonnet46.
+	params model: ClaudeModel opus55.
 	params maxTokens: 1024.
 	params tools: self fixtureClientTools.
 	searchTool := ClaudeToolSearchBm25Tool new.
