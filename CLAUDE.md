@@ -416,7 +416,7 @@ ethos mission pipeline instantiate standard \
 The COO cannot grade their own specs. Every implementation dispatch
 must be preceded by a spec review:
 
-1. COO writes spec → `.tmp/missions/<bead>-spec.yaml`
+1. COO writes spec → `.tmp/missions/<ticket>-spec.yaml`
 2. Dispatch `feature-dev:code-architect` as spec reviewer
 3. Architect reviews for: completeness, correct selectors/APIs,
    clear acceptance criteria, write-set accuracy, evaluator
@@ -444,7 +444,7 @@ a design phase before implementation:
    model
 4. Only then proceed to implementation
 
-The design document lives in `.tmp/missions/<bead>-design.md` and
+The design document lives in `.tmp/missions/<ticket>-design.md` and
 is referenced from the implementation mission contract's `context`
 field.
 
@@ -453,7 +453,7 @@ field.
 ```bash
 ethos mission dispatch --worker kwb --evaluator djb \
   --write-set <paths> --criteria <criteria> \
-  --file .tmp/missions/<bead-id>.yaml
+  --file .tmp/missions/<ticket-id>.yaml
 ```
 
 Then spawn the worker:
@@ -683,23 +683,11 @@ PR review follows punt-kit/standards/pr-review.md: local review (qodo review + s
 ## Issue Tracking
 
 Linear is the tracker of record: the Punt Labs team, issues labelled
-`repo:aspharo`, listed in the shared `anthropic-sdk-pharo` view. Beads
-(`bd`) is a read-mostly local mirror; `.punt-labs/punt/CLAUDE.md`
-(imported below) has the rules for which tracker to write to, and
-`.beads/README.md` has the mirror commands and the required `bd` build.
-
-```bash
-bd config get linear.pull_label   # Must print repo:aspharo; if not, pull main and re-run before any pull
-bd linear sync --pull-if-stale --relations --team c1dfbb2c-985e-40cf-b004-5127646efc9d
-bd ready --label-any repo:aspharo --exclude-label deferred   # Ready work in this repo
-bd show <id>                                                 # Details with dependencies
-```
+`repo:aspharo`, listed in the shared `anthropic-sdk-pharo` view;
+`.punt-labs/punt/CLAUDE.md` (imported below) has the rules.
 
 Create, claim (In Progress), finish (Done) and cancel issues in Linear,
 with the `repo:aspharo` label plus a type label (`Bug`, `Feature`,
-`Improvement`, `Epic`). A local `bd update` or `bd close` is undone by the
-next pull of that issue; a local `bd create` leaves an orphan bead with no
-`external_ref` that no pull removes. Issue status is written in Linear, never
-with a local `bd` edit; there is no beads sync step in the session close.
+`Improvement`, `Epic`).
 
 @.punt-labs/punt/CLAUDE.md
