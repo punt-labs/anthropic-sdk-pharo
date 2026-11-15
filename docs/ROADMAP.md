@@ -50,9 +50,10 @@ different endpoint family.
 Keyring resolution and Metacello baseline consolidation. No new API
 surface; hardens key handling and cold-load correctness.
 
-- **`pass` keyring backend** (`LinuxPassToolBackend`): `PharoKeyring`
-  resolves keys from the `pass`(1) password store on Linux, preferred
-  over `secret-tool` when both are installed
+- **`pass` keyring backend** (`PassToolBackend`): `PharoKeyring`
+  resolves keys from the `pass`(1) password store on any platform,
+  preferred over `secret-tool` and the macOS Keychain when `pass` is
+  installed
 - **Read-only `PharoKeyring`**: resolves keys the user provisioned via
   the OS tools; no longer stores or deletes them (removes the only
   cleartext-key leak vector)

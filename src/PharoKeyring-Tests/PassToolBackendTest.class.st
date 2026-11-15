@@ -1,5 +1,5 @@
 Class {
-	#name : 'LinuxPassToolBackendTest',
+	#name : 'PassToolBackendTest',
 	#superclass : 'TestCase',
 	#instVars : [
 		'backend'
@@ -9,38 +9,38 @@ Class {
 }
 
 { #category : 'running' }
-LinuxPassToolBackendTest >> setUp [
+PassToolBackendTest >> setUp [
 	super setUp.
-	backend := LinuxPassToolBackend new
+	backend := PassToolBackend new
 ]
 
 { #category : 'tests' }
-LinuxPassToolBackendTest >> testExitCodeExtraction [
+PassToolBackendTest >> testExitCodeExtraction [
 	self assert: (backend exitCodeFrom: 0) equals: 0.
 	self assert: (backend exitCodeFrom: 256) equals: 1.
 	self assert: (backend exitCodeFrom: 512) equals: 2
 ]
 
 { #category : 'tests' }
-LinuxPassToolBackendTest >> testIsAvailable [
+PassToolBackendTest >> testIsAvailable [
 	backend isAvailable ifFalse: [ ^ self skip: 'pass not installed' ].
 	self assert: backend isAvailable
 ]
 
 { #category : 'tests' }
-LinuxPassToolBackendTest >> testName [
+PassToolBackendTest >> testName [
 	self assert: backend name equals: 'pass'
 ]
 
 { #category : 'tests' }
-LinuxPassToolBackendTest >> testPathForServiceAccount [
+PassToolBackendTest >> testPathForServiceAccount [
 	self
 		assert: (backend pathForService: 'anthropic' account: 'api-key')
 		equals: 'anthropic/api-key'
 ]
 
 { #category : 'tests' }
-LinuxPassToolBackendTest >> testPathQuotingIsApplied [
+PassToolBackendTest >> testPathQuotingIsApplied [
 	"The path is interpolated into commands shell-quoted. Verify the
 	building block (shellQuote: of the path) wraps a slash-bearing path
 	in single quotes without corrupting the slash."

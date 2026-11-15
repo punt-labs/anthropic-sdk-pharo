@@ -26,6 +26,7 @@ LinuxSecretToolBackendTest >> testExitCodeExtraction [
 
 { #category : 'tests' }
 LinuxSecretToolBackendTest >> testIsAvailable [
+	backend isAvailable ifFalse: [ ^ self skip: 'secret-tool not installed' ].
 	self assert: backend isAvailable
 ]
 

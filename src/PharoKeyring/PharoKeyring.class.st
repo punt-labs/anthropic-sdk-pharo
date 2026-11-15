@@ -51,16 +51,16 @@ PharoKeyring >> backendName [
 
 { #category : 'private' }
 PharoKeyring >> detectBackend [
+	"Prefer pass(1) on every platform when it is installed -- it is the one
+	cross-platform secret store the SDK supports, so a dev with pass gets the
+	same backend on macOS and Linux. Otherwise fall back to the OS-native
+	tool: the macOS Keychain via security(1), secret-tool on Linux. Selection
+	happens once, at detection time. No auto-migration between backends."
 	| passBackend |
+	passBackend := PassToolBackend new.
+	passBackend isAvailable ifTrue: [ ^ backend := passBackend ].
 	OSPlatform current isMacOS ifTrue: [ ^ backend := MacOSSecurityBackend new ].
-	OSPlatform current isUnix ifTrue: [
-		"Prefer pass(1) when it is installed; otherwise fall back to
-		secret-tool. Selection happens once, at detection time. No
-		auto-migration between backends."
-		passBackend := LinuxPassToolBackend new.
-		^ backend := passBackend isAvailable
-			ifTrue: [ passBackend ]
-			ifFalse: [ LinuxSecretToolBackend new ] ].
+	OSPlatform current isUnix ifTrue: [ ^ backend := LinuxSecretToolBackend new ].
 	Error signal: 'Unsupported platform: ', OSPlatform current name
 ]
 
