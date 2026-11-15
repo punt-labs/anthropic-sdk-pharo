@@ -59,7 +59,7 @@ ClaudeInterleavedThinkingExample class >> buildRequest [
 	"Build the multi-turn interleaved-thinking request. The conversation
 	 records two completed assistant turns each carrying a thinking block
 	 and a tool_use block, with tool_result turns between them. Sending
-	 this request to a Claude 4 model with the interleaved-thinking beta
+	 this request with adaptive thinking and the interleaved-thinking beta
 	 active asks the model to produce a sixth turn — a thinking block
 	 plus the final synthesized text answer.
 	
@@ -72,7 +72,7 @@ ClaudeInterleavedThinkingExample class >> buildRequest [
 	req := ClaudeMessageRequest new.
 	req model: ClaudeModel opus55.
 	req maxTokens: 2048.
-	req thinking: (ClaudeThinkingParams enabled: 1024) asDictionary.
+	req thinking: ClaudeThinkingParams adaptive asDictionary.
 	req betas: { ClaudeBetaHeader interleavedThinking }.
 	req tools: { self weatherTool. self timeTool }.
 	
