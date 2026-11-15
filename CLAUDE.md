@@ -62,9 +62,9 @@ Morphic presenters, or CLI plugins, it does not belong here.
   `cancelBatch:`, `deleteBatch:`, `streamBatchResults:do:`,
   `pollBatch:untilEndedEvery:`) run the Message Batches endpoints.
 - **Keyring**: `PharoKeyring` — cross-platform OS keyring wrapper.
-  Strategy pattern with `LinuxSecretToolBackend`,
-  `LinuxPassToolBackend` (the `pass` password store), and
-  `MacOSSecurityBackend`. Used by `ClaudeSDKExampleSupport` for API
+  Strategy pattern with `PassToolBackend` (the `pass` password store,
+  preferred on every platform when installed), `LinuxSecretToolBackend`,
+  and `MacOSSecurityBackend`. Used by `ClaudeSDKExampleSupport` for API
   key resolution.
 
 ## Threading — Critical
@@ -115,8 +115,8 @@ and `ClaudeMockServer`.
 
 | Package | Contents |
 |---------|----------|
-| `PharoKeyring` | `PharoKeyring` (facade), `PharoKeyringBackend` (abstract), `LinuxSecretToolBackend`, `LinuxPassToolBackend`, `MacOSSecurityBackend`, `PharoKeyringError`, `KeyringCommandError` |
-| `PharoKeyring-Tests` | `PharoKeyringTest`, `PharoKeyringIntegrationTest`, `LinuxSecretToolBackendTest`, `LinuxPassToolBackendTest`, `MockKeyringBackend` |
+| `PharoKeyring` | `PharoKeyring` (facade), `PharoKeyringBackend` (abstract), `LinuxSecretToolBackend`, `PassToolBackend`, `MacOSSecurityBackend`, `PharoKeyringError`, `KeyringCommandError` |
+| `PharoKeyring-Tests` | `PharoKeyringTest`, `PharoKeyringIntegrationTest`, `LinuxSecretToolBackendTest`, `PassToolBackendTest`, `MockKeyringBackend` |
 
 Dependency order (per `BaselineOfClaudeSDK`): PharoKeyring is
 standalone; Types loads before everything else; Errors, Streaming,

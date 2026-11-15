@@ -89,7 +89,7 @@ start: $(IMAGE)
 			exit 1; \
 		fi; \
 		echo ">> Starting Pharo on port $(PORT)..."; \
-		DISPLAY=$${DISPLAY:-:1} $(IMAGE_DIR)/pharo-vm/pharo $(IMAGE) eval --no-quit \
+		DISPLAY=$${DISPLAY:-:1} $(VM) $(IMAGE) eval --no-quit \
 			"PosternServer startOn: $(PORT)" \
 			> $(LOG_FILE) 2>&1 & \
 		echo $$! > $(PID_FILE); \
@@ -422,7 +422,7 @@ check-baseline: $(VM)
 		&& mv Pharo*.image Pharo.image \
 		&& mv Pharo*.changes Pharo.changes \
 		&& rm -f image.zip
-	@$(IMAGE_DIR)/pharo-vm/pharo --headless $(BASELINE_IMG) eval \
+	@$(VM) --headless $(BASELINE_IMG) eval \
 		"(Smalltalk globals includesKey: #ClaudeClient) \
 			ifTrue: [ Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ClaudeClient present before load (not a cold image)'; lf; flush. Smalltalk exitFailure ]. \
 		[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; load ] \
