@@ -21,7 +21,6 @@ PharoDebug.log
 # macOS
 .DS_Store
 
-.biff.local
 
 # Machine-specific direnv overrides — may hold secrets, never committed
 .envrc.local
