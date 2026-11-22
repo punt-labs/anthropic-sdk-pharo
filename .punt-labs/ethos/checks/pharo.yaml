@@ -17,20 +17,20 @@ checks:
     stage: commit
     files: all
     adapter: make
-    target: lint
+    target: gate-lint
     on_fail: block
     timeout: 120s
   - name: image-check
     stage: handoff
     files: all
     adapter: make
-    target: check
+    target: gate-check
     on_fail: block
     timeout: 10m
   - name: fast-tests
     stage: handoff
     files: all
     adapter: make
-    target: test-fast
+    target: gate-test-fast
     on_fail: block
     timeout: 10m
