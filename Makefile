@@ -138,7 +138,10 @@ ensure-image:
 		echo "FAIL: no Pharo image at $(IMAGE); run 'make setup' first"; exit 1; \
 	fi; \
 	$(MAKE) --no-print-directory start || { echo "FAIL: could not start the eval server (see $(LOG_FILE))"; exit 1; }; \
-	$(MAKE) --no-print-directory filein >/dev/null || { echo "FAIL: could not file in src/ (make filein)"; exit 1; }
+	RESULT=$$($(CURL) -f -d "$(LOAD_PACKAGES_EXPR)") && \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Loaded [0-9]+ packages, normalized [0-9]+ methods'?$$" \
+		|| { echo "FAIL: could not file in src/ (reload failed or returned an invalid summary)"; exit 1; }; \
+	$(MAKE) --no-print-directory sync-ref >/dev/null
 
 gate-lint: ensure-image
 	@$(MAKE) --no-print-directory lint
