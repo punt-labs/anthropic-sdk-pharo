@@ -167,6 +167,23 @@ make eval       # interactive Smalltalk eval (stdin → eval server)
 make spec       # build claude-sdk-specification PDFs (requires pdflatex)
 ```
 
+### Agent checks
+
+`.punt-labs/ethos/checks/pharo.yaml` selects advisory ShellCheck feedback
+on shell edits, blocking ShellCheck and `make lint` at commit, and blocking
+`make check` plus `make test-fast` at SubagentStop handoff. Smalltalk edits
+do not run per-file checks. Markdown checks are omitted until a repository
+tool version is pinned. Use Ethos built from `f4f884f` or newer, including
+its plugin's SubagentStop hook (1800-second timeout).
+
+Start the isolated image with `DISPLAY=:0 make start` before committing or
+handing off. Gates inspect the live image, not arbitrary on-disk Tonel edits:
+develop through the eval server and export through Iceberg as above. They
+do not start the image or load source automatically. `make check` also checks
+package completeness and Iceberg cleanliness; its `sync-ref` prerequisite
+updates only Iceberg's reference metadata to HEAD, not methods or Git's index.
+Keep each concurrent checkout's image and eval port isolated.
+
 ## Image Discipline
 
 - All code lives in `src/` (Tonel format). The image is disposable,
@@ -691,3 +708,4 @@ with the `repo:aspharo` label plus a type label (`Bug`, `Feature`,
 `Improvement`, `Epic`).
 
 @.punt-labs/punt/CLAUDE.md
+@.punt-labs/ethos/CLAUDE.md

@@ -147,8 +147,10 @@ test:
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
 		'  Errors: ', result errorCount printString") \
-		&& echo "$${RESULT#\'}" | sed "s/'$$//" \
-		|| echo "Error: is the server running? (make start)"
+		|| { echo "Error: is the server running? (make start)"; exit 1; }; \
+	echo "$${RESULT#\'}" | sed "s/'$$//"; \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Tests: [0-9]+  Passed: [0-9]+  Failures: 0  Errors: 0'?$$" \
+		|| { echo "FAIL: tests failed or returned an invalid summary"; exit 1; }
 
 test-fast:
 	@echo ">> Running fast Messaging SDK tests (no slow, no integration)..."
@@ -159,8 +161,10 @@ test-fast:
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
 		'  Errors: ', result errorCount printString") \
-		&& echo "$${RESULT#\'}" | sed "s/'$$//" \
-		|| echo "Error: is the server running? (make start)"
+		|| { echo "Error: is the server running? (make start)"; exit 1; }; \
+	echo "$${RESULT#\'}" | sed "s/'$$//"; \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Tests: [0-9]+  Passed: [0-9]+  Failures: 0  Errors: 0'?$$" \
+		|| { echo "FAIL: tests failed or returned an invalid summary"; exit 1; }
 
 test-full:
 	@echo ">> Running all Messaging SDK tests (including integration)..."
