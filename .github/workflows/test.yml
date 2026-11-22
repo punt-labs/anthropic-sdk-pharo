@@ -35,6 +35,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Test target exit codes (make test-gates)
+        run: make test-gates
+
       - name: Build image + load SDK packages
         run: make setup
 
