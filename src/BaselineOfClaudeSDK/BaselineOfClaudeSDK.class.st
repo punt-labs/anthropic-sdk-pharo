@@ -53,7 +53,7 @@ BaselineOfClaudeSDK >> baseline: spec [
 			"Layer 2 — observability: typed PuntLog signals and PuntTelemetry spans
 			 from the shared punt-observe-pharo package, pinned to a main commit"
 			spec baseline: 'PuntObserve' with: [
-				spec repository: 'github://punt-labs/punt-observe-pharo:5252c70dd765ced2d3120113e07c55d6426bf25a/src' ].
+				spec repository: 'github://punt-labs/punt-observe-pharo:92f6217a4b5e74d55543343e950de488f64977dd/src' ].
 			spec
 				package: 'Claude-Messaging-Observability' with: [
 					spec requires: #('PuntObserve' 'Claude-Messaging-Errors') ];
