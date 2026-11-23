@@ -184,12 +184,12 @@ smoke:
 # loaded through BaselineOfClaudeSDK (no Postern, no dev-image state).
 SMOKE_IMG_DIR ?= $(CURDIR)/.tmp/smoke-image
 smoke-image:
-	@rm -rf $(SMOKE_IMG_DIR)
-	@mkdir -p $(SMOKE_IMG_DIR)
-	@cd $(SMOKE_IMG_DIR) && curl -fsSL https://get.pharo.org/64/$(PHARO_VERSION)+vm | bash >/dev/null
+	@rm -rf "$(SMOKE_IMG_DIR)"
+	@mkdir -p "$(SMOKE_IMG_DIR)"
+	@cd "$(SMOKE_IMG_DIR)" && curl -fsSL https://get.pharo.org/64/$(PHARO_VERSION)+vm | bash >/dev/null
 	@scripts/fetch-observe
-	@$(SMOKE_IMG_DIR)/pharo --headless $(SMOKE_IMG_DIR)/Pharo.image eval --save "$(LOAD_OBSERVE_EXPR)"
-	@$(SMOKE_IMG_DIR)/pharo --headless $(SMOKE_IMG_DIR)/Pharo.image eval --save \
+	@"$(SMOKE_IMG_DIR)/pharo" --headless "$(SMOKE_IMG_DIR)/Pharo.image" eval --save "$(LOAD_OBSERVE_EXPR)"
+	@"$(SMOKE_IMG_DIR)/pharo" --headless "$(SMOKE_IMG_DIR)/Pharo.image" eval --save \
 		"Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; onConflictUseLoaded; load. 'ClaudeSDK loaded'"
 
 test:
