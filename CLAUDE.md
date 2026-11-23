@@ -173,7 +173,7 @@ make spec       # build claude-sdk-specification PDFs (requires pdflatex)
 on shell edits, blocking ShellCheck and `make lint` at commit, and blocking
 `make check` plus `make test-fast` at SubagentStop handoff. Smalltalk edits
 do not run per-file checks. Markdown checks are omitted until a repository
-tool version is pinned. Use Ethos built from `f4f884f` or newer, including
+tool version is pinned. Use Ethos v5.2.0 or newer, including
 its plugin's SubagentStop hook (1800-second timeout).
 
 The commit and handoff gates run `make gate-lint`, `gate-check` and
