@@ -42,7 +42,7 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
 LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
-.PHONY: setup start stop save rebuild filein eval test test-fast test-full status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval test test-fast test-full test-gates ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -126,6 +126,32 @@ save:
 rebuild: stop clean-image setup
 	@echo "  ok Fresh image rebuilt"
 
+# ── Lifecycle gates (ethos commit/handoff checks) ──────
+# The gate-* targets make sure the eval server is up before running the
+# real target. A running server is used as is. A stopped one is started from
+# the existing image and synced with src/ via filein, so the gate checks the
+# working tree. No image at all is a setup error: building one downloads Pharo.
+
+ensure-image:
+	@if $(CURL) -f -d "'ping'" >/dev/null 2>&1; then exit 0; fi; \
+	if [ ! -f $(IMAGE) ]; then \
+		echo "FAIL: no Pharo image at $(IMAGE); run 'make setup' first"; exit 1; \
+	fi; \
+	$(MAKE) --no-print-directory start || { echo "FAIL: could not start the eval server (see $(LOG_FILE))"; exit 1; }; \
+	RESULT=$$($(CURL) -f -d "$(LOAD_PACKAGES_EXPR)") && \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Loaded [0-9]+ packages, normalized [0-9]+ methods'?$$" \
+		|| { echo "FAIL: could not file in src/ (reload failed or returned an invalid summary)"; exit 1; }; \
+	$(MAKE) --no-print-directory sync-ref >/dev/null
+
+gate-lint: ensure-image
+	@$(MAKE) --no-print-directory lint
+
+gate-check: ensure-image
+	@$(MAKE) --no-print-directory check
+
+gate-test-fast: ensure-image
+	@$(MAKE) --no-print-directory test-fast
+
 # ── Development ────────────────────────────────────────
 
 filein:
@@ -147,8 +173,10 @@ test:
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
 		'  Errors: ', result errorCount printString") \
-		&& echo "$${RESULT#\'}" | sed "s/'$$//" \
-		|| echo "Error: is the server running? (make start)"
+		|| { echo "Error: is the server running? (make start)"; exit 1; }; \
+	echo "$${RESULT#\'}" | sed "s/'$$//"; \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Tests: [0-9]+  Passed: [0-9]+  Failures: 0  Errors: 0'?$$" \
+		|| { echo "FAIL: tests failed or returned an invalid summary"; exit 1; }
 
 test-fast:
 	@echo ">> Running fast Messaging SDK tests (no slow, no integration)..."
@@ -159,8 +187,14 @@ test-fast:
 		'  Passed: ', result passedCount printString, \
 		'  Failures: ', result failureCount printString, \
 		'  Errors: ', result errorCount printString") \
-		&& echo "$${RESULT#\'}" | sed "s/'$$//" \
-		|| echo "Error: is the server running? (make start)"
+		|| { echo "Error: is the server running? (make start)"; exit 1; }; \
+	echo "$${RESULT#\'}" | sed "s/'$$//"; \
+	printf '%s\n' "$$RESULT" | grep -Eq "^'?Tests: [0-9]+  Passed: [0-9]+  Failures: 0  Errors: 0'?$$" \
+		|| { echo "FAIL: tests failed or returned an invalid summary"; exit 1; }
+
+test-gates:
+	@echo ">> Checking test target exit codes (no image needed)..."
+	@scripts/test-make-gates.sh
 
 test-full:
 	@echo ">> Running all Messaging SDK tests (including integration)..."
