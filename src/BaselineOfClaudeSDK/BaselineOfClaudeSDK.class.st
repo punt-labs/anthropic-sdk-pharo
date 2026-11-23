@@ -50,6 +50,16 @@ BaselineOfClaudeSDK >> baseline: spec [
 				package: 'Claude-Messaging-Errors' with: [ spec requires: #('Claude-Messaging-Types') ];
 				package: 'Claude-Messaging-Errors-Tests' with: [ spec requires: #('Claude-Messaging-Errors') ].
 
+			"Layer 2 — observability: typed PuntLog signals and PuntTelemetry spans
+			 from the shared punt-observe-pharo package, pinned to a main commit"
+			spec baseline: 'PuntObserve' with: [
+				spec repository: 'github://punt-labs/punt-observe-pharo:5252c70dd765ced2d3120113e07c55d6426bf25a/src' ].
+			spec
+				package: 'Claude-Messaging-Observability' with: [
+					spec requires: #('PuntObserve' 'Claude-Messaging-Errors') ];
+				package: 'Claude-Messaging-Observability-Tests' with: [
+					spec requires: #('Claude-Messaging-Observability' 'Claude-Messaging-Client-Tests') ].
+
 			"Layer 2 — streaming (depends on Types, Errors)"
 			spec
 				package: 'Claude-Messaging-Streaming' with: [
@@ -74,6 +84,7 @@ BaselineOfClaudeSDK >> baseline: spec [
 					spec requires: #(
 						'Claude-Messaging-Types'
 						'Claude-Messaging-Errors'
+						'Claude-Messaging-Observability'
 						'Claude-Messaging-Streaming'
 						'Claude-Messaging-Files'
 						'Claude-Messaging-MCP'

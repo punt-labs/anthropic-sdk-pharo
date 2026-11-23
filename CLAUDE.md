@@ -95,6 +95,7 @@ SDK — plus the standalone PharoKeyring.
 |---------|----------|
 | `Claude-Messaging-Types` | `ClaudeMessage`, `ClaudeContentBlock` hierarchy, `ClaudeTool`, `ClaudeToolInputSchema`, `ClaudeMessageRequest`, `ClaudeModel`, `ClaudeUsage`, `ClaudeCacheControl`, `ClaudeRequestOptions`, `ClaudeSamplingParams`, `ClaudeThinkingParams`, `ClaudeToolParams`, `ClaudeBetaHeader`, response content blocks including `ClaudeServerToolUseBlock`, `ClaudeMCPToolUseBlock`, `ClaudeMCPToolResultBlock` |
 | `Claude-Messaging-Errors` | `ClaudeApiError` hierarchy (Auth, Billing, InvalidRequest, NotFound, Overloaded, Permission, RateLimit, Server, Timeout) |
+| `Claude-Messaging-Observability` | PuntLog/PuntTelemetry adoption: `ClaudeObservability` (lifecycle entry point), `ClaudeRequestObservation`, typed `ClaudeApiSignal` hierarchy (retry, retry exhausted, outcome), `ClaudeApiRequestSpan` telemetry schema |
 | `Claude-Messaging-Streaming` | `ClaudeSSEDecoder`, `ClaudeStreamingSocket` (raw TLS socket with chunked transfer-encoding), `ClaudeStreamingMultiPartEntity` |
 | `Claude-Messaging-Client` | `ClaudeClient` (factory, config, `sendMessage:`, `countTokens:`, `listModels`, `getModel:`, `streamMessage:do:`, `openStreamingSocket:`, retry with backoff) |
 | `Claude-Messaging-Tools` | Request-side server tool definitions (`ClaudeBashTool`, `ClaudeTextEditorTool`, `ClaudeWebSearchTool`, etc.) and extension methods on `ClaudeMessageRequest` |
@@ -109,7 +110,9 @@ SDK — plus the standalone PharoKeyring.
 Each production package has a matching `-Tests` package.
 `Claude-Messaging-Client-Tests` contains the shared
 `ClaudeAbstractTestSuite`, the per-product `ClaudeMessagingTestSuite`,
-and `ClaudeMockServer`.
+and `ClaudeMockServer`. `Claude-Messaging-Observability-Tests` also
+holds `ClaudeObservabilitySmoke`, the entry point `make smoke` runs in
+a fresh image.
 
 ### Standalone
 
@@ -120,8 +123,9 @@ and `ClaudeMockServer`.
 
 Dependency order (per `BaselineOfClaudeSDK`): PharoKeyring is
 standalone; Types loads before everything else; Errors, Streaming,
-Files, MCP, Skills depend on Types; Client depends on Types, Errors,
-Streaming, Files, MCP, Skills; Batches depends on Types, Errors,
+Files, MCP, Skills depend on Types; Observability depends on
+PuntObserve (punt-observe-pharo, pinned by commit) and Errors; Client
+depends on Types, Errors, Observability, Streaming, Files, MCP, Skills; Batches depends on Types, Errors,
 Streaming, and Client (Batches adds `ClaudeClient` extension methods,
 so the host class must load first); Tools depends on Types and Client
 (Tools adds extension methods to `ClaudeMessageRequest`, a Types

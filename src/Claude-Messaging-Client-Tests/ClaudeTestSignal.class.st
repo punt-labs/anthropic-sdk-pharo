@@ -1,24 +1,18 @@
 "
-A BeaconSignal carrying a single test-log message.
+A PuntLogDebugSignal carrying a single integration-test narration message, component integration-test.
 
-It is emitted by ClaudeTestLog and rendered one line at a time by any
-SignalLogger (TranscriptLogger for live output, ClaudeFileSignalLogger for
-a durable sink, MemoryLogger for assertions in tests).
+It is emitted by ClaudeTestLog. ClaudeFileSignalLogger renders it into the per-run activity file, MemoryLogger captures it in tests, and while PuntLog runs it lands in the escaped, redacted durable log like any other DEBUG signal.
 
-	(ClaudeTestSignal new message: 'hello') message
+	(ClaudeTestSignal new message: 'hello'; yourself) message
 	>>> 'hello'
 
 	(MemoryLogger new runDuring: [ ClaudeTestSignal emit: 'hi' ]) recordings
 		anyOne message
 	>>> 'hi'
-
 "
 Class {
 	#name : 'ClaudeTestSignal',
-	#superclass : 'BeaconSignal',
-	#instVars : [
-		'message'
-	],
+	#superclass : 'PuntLogDebugSignal',
 	#category : 'Claude-Messaging-Client-Tests',
 	#package : 'Claude-Messaging-Client-Tests'
 }
@@ -30,22 +24,13 @@ ClaudeTestSignal class >> emit: aString [
 		emit
 ]
 
-{ #category : 'accessing' }
-ClaudeTestSignal >> message [
-	^ message
-]
-
-{ #category : 'accessing' }
-ClaudeTestSignal >> message: anObject [
-	message := anObject
+{ #category : 'initialization' }
+ClaudeTestSignal >> initialize [
+	super initialize.
+	component := 'integration-test'
 ]
 
 { #category : 'accessing' }
 ClaudeTestSignal >> messageText [
 	^ message
-]
-
-{ #category : 'printing' }
-ClaudeTestSignal >> printOneLineContentsOn: stream [
-	stream nextPutAll: self message
 ]

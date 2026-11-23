@@ -188,6 +188,16 @@ ClaudeApiError class >> subclassForStatus: anInteger [
 		anInteger >= 500 ifTrue: [ ClaudeServerError ] ifFalse: [ self ] ]
 ]
 
+{ #category : 'telemetry' }
+ClaudeApiError >> claudeStatusCode [
+	^ statusCode
+]
+
+{ #category : 'telemetry' }
+ClaudeApiError >> claudeTelemetryErrorKind [
+	^ #api
+]
+
 { #category : 'testing' }
 ClaudeApiError >> isRetryable [
 	"Return true if this error is one where the caller should retry the

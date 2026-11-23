@@ -1,7 +1,7 @@
 "
 Demonstrate the Batches API: submit a small batch of Messages requests, poll until the batch ends, then stream the JSONL results and dispatch each entry polymorphically on its outcome (succeeded, errored, canceled, expired).
 
-The build helper is pure and doctestable; the run helper takes a `ClaudeClient` and performs the full create -> poll -> stream loop, logging every result to the Transcript.
+The build helper is pure and doctestable; the run helper takes a `ClaudeClient` and performs the full create -> poll -> stream loop. `runOn:reportingOn:` writes a progress line per entry to a stream the caller displays, for example `ClaudeMessagingBatchesExample runOn: client reportingOn: Transcript`.
 
 The streaming block uses `isSucceeded`, `isErrored`, `isCanceled`, and `isExpired` predicates instead of comparing `result type` strings -- that's the exact ergonomic this example exists to demonstrate. Adding a fifth outcome on the wire would never break this call site.
 
@@ -54,24 +54,31 @@ ClaudeMessagingBatchesExample class >> buildSampleCreateParams [
 ]
 
 { #category : 'private' }
-ClaudeMessagingBatchesExample class >> logCanceledOrExpired: anEntry [
-	"Log a canceled or expired batch entry to the Transcript with the outcome type."
-	| label |
-	label := anEntry isCanceled ifTrue: [ 'CANCELED' ] ifFalse: [ 'EXPIRED' ].
-	Transcript
+ClaudeMessagingBatchesExample class >> report: anEntry on: aStream [
+	"Write one line for anEntry, dispatched on its outcome predicates."
+	anEntry isSucceeded ifTrue: [ ^ self reportSucceeded: anEntry on: aStream ].
+	anEntry isErrored ifTrue: [ ^ self reportErrored: anEntry on: aStream ].
+	(anEntry isCanceled or: [ anEntry isExpired ])
+		ifTrue: [ self reportCanceledOrExpired: anEntry on: aStream ]
+]
+
+{ #category : 'private' }
+ClaudeMessagingBatchesExample class >> reportCanceledOrExpired: anEntry on: aStream [
+	"Write a canceled or expired batch entry with the outcome type."
+	aStream
 		nextPutAll: anEntry customId;
 		space;
-		nextPutAll: label;
+		nextPutAll: (anEntry isCanceled ifTrue: [ 'CANCELED' ] ifFalse: [ 'EXPIRED' ]);
 		cr
 ]
 
 { #category : 'private' }
-ClaudeMessagingBatchesExample class >> logErrored: anEntry [
-	"Log an errored batch entry to the Transcript with the inner error message."
+ClaudeMessagingBatchesExample class >> reportErrored: anEntry on: aStream [
+	"Write an errored batch entry with the inner error message."
 	| err message |
 	err := anEntry result error.
 	message := err ifNil: [ '<no error payload>' ] ifNotNil: [ err message ifNil: [ '<no message>' ] ].
-	Transcript
+	aStream
 		nextPutAll: anEntry customId;
 		nextPutAll: ' ERROR: ';
 		nextPutAll: message;
@@ -79,16 +86,16 @@ ClaudeMessagingBatchesExample class >> logErrored: anEntry [
 ]
 
 { #category : 'private' }
-ClaudeMessagingBatchesExample class >> logSucceeded: anEntry [
-	"Log a succeeded batch entry to the Transcript. Truncates the message text
-	 to a leading slice so a noisy generation never spams the Transcript."
+ClaudeMessagingBatchesExample class >> reportSucceeded: anEntry on: aStream [
+	"Write a succeeded batch entry, truncating the message text to a leading
+	 slice so a noisy generation never floods the report."
 	| msg text snippet |
 	msg := anEntry result message.
 	text := msg ifNil: [ '' ] ifNotNil: [ msg textContent ifNil: [ '' ] ].
 	snippet := text size > 60
 		ifTrue: [ (text first: 60) , '...' ]
 		ifFalse: [ text ].
-	Transcript
+	aStream
 		nextPutAll: anEntry customId;
 		nextPutAll: ' OK: ';
 		nextPutAll: snippet;
@@ -104,20 +111,26 @@ ClaudeMessagingBatchesExample class >> run [
 
 { #category : 'running' }
 ClaudeMessagingBatchesExample class >> runOn: aClaudeClient [
+	"Drive the full Batches lifecycle against the given client and answer the
+	 OrderedCollection of every ClaudeBatchResult in submission order. To watch
+	 progress, use runOn:reportingOn: with a stream such as the Transcript."
+	^ self runOn: aClaudeClient reportingOn: (WriteStream on: String new)
+]
+
+{ #category : 'running' }
+ClaudeMessagingBatchesExample class >> runOn: aClaudeClient reportingOn: aStream [
 	"Drive the full Batches lifecycle against the given client:
 	   1. Submit the sample batch via createBatch:
 	   2. Poll every 2 seconds via pollBatch:untilEndedEvery: until the batch ends
 	   3. Stream the JSONL results via streamBatchResults:do:
 	      and dispatch each entry polymorphically on its outcome (no `type =` chains).
 
-	 Returns the OrderedCollection of every ClaudeBatchResult yielded by the stream
-	 in submission order, so callers can assert on the full set after the run.
-
-	 Logs every entry to the Transcript so a developer running the example by hand
-	 sees progress without an attached debugger."
+	 Answers the OrderedCollection of every ClaudeBatchResult yielded by the stream
+	 in submission order. Writes one progress line per step and entry to aStream,
+	 the caller's display, never a diagnostic sink."
 	| created |
 	created := aClaudeClient createBatch: self buildSampleCreateParams.
-	Transcript
+	aStream
 		nextPutAll: 'Created batch ';
 		nextPutAll: created id;
 		nextPutAll: ' (';
@@ -125,16 +138,12 @@ ClaudeMessagingBatchesExample class >> runOn: aClaudeClient [
 		nextPutAll: ')';
 		cr.
 	aClaudeClient pollBatch: created id untilEndedEvery: 2.
-	Transcript
+	aStream
 		nextPutAll: 'Batch ';
 		nextPutAll: created id;
 		nextPutAll: ' ended; streaming results...';
 		cr.
 	^ aClaudeClient
 		streamBatchResults: created id
-		do: [ :entry |
-			entry isSucceeded ifTrue: [ self logSucceeded: entry ].
-			entry isErrored ifTrue: [ self logErrored: entry ].
-			(entry isCanceled or: [ entry isExpired ])
-				ifTrue: [ self logCanceledOrExpired: entry ] ]
+		do: [ :entry | self report: entry on: aStream ]
 ]

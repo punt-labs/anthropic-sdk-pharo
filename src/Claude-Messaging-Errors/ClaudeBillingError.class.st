@@ -15,3 +15,8 @@ Class {
 	#category : 'Claude-Messaging-Errors',
 	#package : 'Claude-Messaging-Errors'
 }
+
+{ #category : 'telemetry' }
+ClaudeBillingError >> claudeTelemetryErrorKind [
+	^ #billing
+]
