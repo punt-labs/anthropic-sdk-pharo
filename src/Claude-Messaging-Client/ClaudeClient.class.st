@@ -611,7 +611,7 @@ ClaudeClient >> countTokens: aClaudeMessageRequest [
 	"Count tokens for a message. Returns ClaudeMessageTokensCount.
 	 The count_tokens endpoint accepts model, messages, system, and tools only.
 	 Uses composedSystem to include the output format suffix in the count."
-	^ self executeWithRetry: [
+	^ self execute: #countTokens withRetry: [
 		| http json response payload composed |
 		http := self newHttpClientFor: aClaudeMessageRequest.
 		payload := OrderedDictionary new.
@@ -650,7 +650,7 @@ ClaudeClient >> debugLog: aBlockOrNil [
 { #category : 'files' }
 ClaudeClient >> deleteFile: aFileId [
 	"Delete a file. Returns ClaudeDeletedFile."
-	^ self executeWithRetry: [
+	^ self execute: #files withRetry: [
 		| http resp |
 		http := self newFileHttpClient.
 		http url: baseUrl, '/v1/files/', aFileId.
@@ -662,7 +662,7 @@ ClaudeClient >> deleteFile: aFileId [
 { #category : 'skills' }
 ClaudeClient >> deleteSkill: aSkillId [
 	"Delete a skill. Returns ClaudeDeletedSkill."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http resp |
 		http := self newSkillHttpClient.
 		http url: baseUrl, '/v1/skills/', aSkillId, '?beta=true'.
@@ -674,7 +674,7 @@ ClaudeClient >> deleteSkill: aSkillId [
 { #category : 'skills' }
 ClaudeClient >> deleteVersion: aVersionId for: aSkillId [
 	"Delete a skill version. Returns ClaudeDeletedSkillVersion."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http resp |
 		http := self newSkillHttpClient.
 		http url: baseUrl, '/v1/skills/', aSkillId, '/versions/', aVersionId, '?beta=true'.
@@ -686,7 +686,7 @@ ClaudeClient >> deleteVersion: aVersionId for: aSkillId [
 { #category : 'files' }
 ClaudeClient >> downloadFile: aFileId [
 	"Download file content. Returns ByteArray."
-	^ self executeWithRetry: [
+	^ self execute: #files withRetry: [
 		| http resp |
 		http := self newFileHttpClient.
 		http
@@ -715,48 +715,24 @@ ClaudeClient >> errorFor: aZnResponse [
 ]
 
 { #category : 'private' }
-ClaudeClient >> executeWithRetry: aBlock [
-	"Execute aBlock (which does HTTP + checkResponse:). Acquire a rate limit permit
-	 before each attempt when a rate limiter is set. Retry on retryable errors,
-	 logging each attempt and any final exhaustion to the Transcript.
-	 Network errors from ZnClient are narrowed:
-	   - ConnectionTimedOut -> ClaudeTimeoutError(408), retryable (matches streaming path).
-	   - Other NetworkError subclasses (ConnectionRefused, SocketClosed, TLS failures)
-	     -> ClaudeNetworkError(599), non-retryable, propagates to caller. See stasdk-i7uc."
+ClaudeClient >> execute: anOperation withRetry: aBlock [
+	"Run aBlock under the retry policy (see retry:for:) and report its outcome
+	 as one anthropic-sdk-pharo.api.request span plus a DEBUG outcome signal.
+	 anOperation is one of ClaudeApiRequestSpan operations."
+	^ self observe: anOperation during: [ :observation | self retry: aBlock for: observation ]
+]
 
-	| attempt |
-	attempt := 0.
-	[
-		rateLimiter ifNotNil: [ :rl | rl acquire ].
-		[[[ ^ aBlock value ]
-			on: ConnectionTimedOut
-			do: [ :timeoutError |
-				(ClaudeTimeoutError new
-					statusCode: 408;
-					message: timeoutError messageText;
-					yourself) signal ] ]
-			on: NetworkError
-			do: [ :netError |
-				(ClaudeNetworkError new
-					statusCode: 599;
-					message: netError class name , ': ' , netError messageText;
-					yourself) signal ] ]
-			on: ClaudeApiError
-			do: [ :error |
-				error isRetryable ifFalse: [ error signal ].
-				attempt := attempt + 1.
-				attempt > maxRetries ifTrue: [
-					self logRetryExhaustedFor: error at: attempt.
-					error signal ].
-				self logRetryAttempt: attempt of: maxRetries for: error.
-				(self backoffDelay: attempt retryAfter: error retryAfter) wait ]
-	] repeat
+{ #category : 'private' }
+ClaudeClient >> executeWithRetry: aBlock [
+	"Run aBlock under the retry policy without an outcome span, for callers
+	 with no observed operation around them."
+	^ self retry: aBlock for: (ClaudeRequestObservation operation: #other)
 ]
 
 { #category : 'files' }
 ClaudeClient >> getFileMetadata: aFileId [
 	"Get metadata for a file. Returns ClaudeFileMetadata."
-	^ self executeWithRetry: [
+	^ self execute: #files withRetry: [
 		| http resp |
 		http := self newFileHttpClient.
 		http url: baseUrl, '/v1/files/', aFileId.
@@ -768,7 +744,7 @@ ClaudeClient >> getFileMetadata: aFileId [
 { #category : 'api' }
 ClaudeClient >> getModel: modelId [
 	"Get model info. Returns ClaudeModelInfo."
-	^ self executeWithRetry: [
+	^ self execute: #models withRetry: [
 		| http response |
 		http := self newHttpClient.
 		response := http
@@ -782,7 +758,7 @@ ClaudeClient >> getModel: modelId [
 { #category : 'skills' }
 ClaudeClient >> getSkill: aSkillId [
 	"Get a skill by ID. Returns ClaudeSkill."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http resp |
 		http := self newSkillHttpClient.
 		http url: baseUrl, '/v1/skills/', aSkillId, '?beta=true'.
@@ -794,7 +770,7 @@ ClaudeClient >> getSkill: aSkillId [
 { #category : 'skills' }
 ClaudeClient >> getVersion: aVersionId for: aSkillId [
 	"Get a specific skill version. Returns ClaudeSkillVersion."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http resp |
 		http := self newSkillHttpClient.
 		http url: baseUrl, '/v1/skills/', aSkillId, '/versions/', aVersionId, '?beta=true'.
@@ -841,7 +817,7 @@ ClaudeClient >> listFiles [
 { #category : 'files' }
 ClaudeClient >> listFiles: aClaudeFileListParams [
 	"List files with optional pagination params. Returns ClaudeFilePage."
-	^ self executeWithRetry: [
+	^ self execute: #files withRetry: [
 		| http url resp |
 		http := self newFileHttpClient.
 		url := baseUrl, '/v1/files'.
@@ -856,7 +832,7 @@ ClaudeClient >> listFiles: aClaudeFileListParams [
 { #category : 'api' }
 ClaudeClient >> listModels [
 	"List available models. Returns OrderedCollection of ClaudeModelInfo."
-	^ self executeWithRetry: [
+	^ self execute: #models withRetry: [
 		| http response data |
 		http := self newHttpClient.
 		self notifyDebugLog: { #direction -> #request . #url -> (baseUrl, '/v1/models') } asDictionary.
@@ -873,7 +849,7 @@ ClaudeClient >> listModels [
 { #category : 'api' }
 ClaudeClient >> listModels: limit after: afterId [
 	"List available models with pagination. Returns Dictionary with data, has_more, first_id, last_id."
-	^ self executeWithRetry: [
+	^ self execute: #models withRetry: [
 		| http response data url |
 		url := self buildModelListUrlWithLimit: limit after: afterId.
 		
@@ -899,7 +875,7 @@ ClaudeClient >> listSkills [
 { #category : 'skills' }
 ClaudeClient >> listSkills: aClaudeSkillListParamsOrNil [
 	"List skills with optional query params. Returns ClaudeSkillPage."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http url resp |
 		http := self newSkillHttpClient.
 		url := baseUrl, '/v1/skills?beta=true'.
@@ -920,7 +896,7 @@ ClaudeClient >> listVersionsFor: aSkillId [
 { #category : 'skills' }
 ClaudeClient >> listVersionsFor: aSkillId params: aClaudeSkillVersionListParamsOrNil [
 	"List versions for a skill with optional query params. Returns ClaudeSkillVersionPage."
-	^ self executeWithRetry: [
+	^ self execute: #skills withRetry: [
 		| http url resp |
 		http := self newSkillHttpClient.
 		url := baseUrl, '/v1/skills/', aSkillId, '/versions?beta=true'.
@@ -930,39 +906,6 @@ ClaudeClient >> listVersionsFor: aSkillId params: aClaudeSkillVersionListParamsO
 		resp := http get; response.
 		self checkResponse: resp.
 		ClaudeSkillVersionPage fromJson: (STONJSON fromString: resp contents) ]
-]
-
-{ #category : 'private' }
-ClaudeClient >> logRetryAttempt: attempt of: maxAttempts for: error [
-	"Log a retry attempt to Transcript so callers see why we are pausing."
-	Transcript
-		nextPutAll: '[Claude retry] attempt ';
-		nextPutAll: attempt printString;
-		nextPutAll: '/';
-		nextPutAll: maxAttempts printString;
-		nextPutAll: ': ';
-		nextPutAll: error class name;
-		nextPutAll: ' (';
-		nextPutAll: error statusCode printString;
-		nextPutAll: ')';
-		cr;
-		flush
-]
-
-{ #category : 'private' }
-ClaudeClient >> logRetryExhaustedFor: error at: attempt [
-	"Log retry budget exhaustion so the agent sees why a retry failed
-	 instead of just receiving a raised error after a long pause."
-	Transcript
-		nextPutAll: '[Claude retry] exhausted after ';
-		nextPutAll: attempt printString;
-		nextPutAll: ' attempts: ';
-		nextPutAll: error class name;
-		nextPutAll: ' (';
-		nextPutAll: error statusCode printString;
-		nextPutAll: ')';
-		cr;
-		flush
 ]
 
 { #category : 'accessing' }
@@ -1031,9 +974,24 @@ ClaudeClient >> notifyDebugLog: anObject [
 ]
 
 { #category : 'private' }
-ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest [
-	"Buffered streaming via ZnClient. Reads full response then returns a ReadStream. Used for HTTP mock servers in tests."
-	^ self executeWithRetry: [
+ClaudeClient >> observe: anOperation during: aBlock [
+	"Evaluate aBlock with a ClaudeRequestObservation and report its outcome:
+	 completed on a normal return, failed (then passed on) on any Error."
+	| observation result |
+	observation := ClaudeRequestObservation operation: anOperation.
+	result := [ aBlock value: observation ]
+		on: Error
+		do: [ :error |
+			observation failed: error.
+			error pass ].
+	observation completed.
+	^ result
+]
+
+{ #category : 'private' }
+ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest for: anObservation [
+	"Buffered streaming via ZnClient. Reads full response then returns a ReadStream; retries count on anObservation. Used for HTTP mock servers in tests."
+	^ self retry: [
 		| http paramsJson contents |
 		http := self newHttpClientFor: aClaudeMessageRequest.
 		http timeout: streamingTimeout.
@@ -1045,16 +1003,22 @@ ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest [
 			post.
 		self checkResponse: http response.
 		contents := http response entity contents asString.
-		contents readStream ]
+		contents readStream ] for: anObservation
 ]
 
 { #category : 'streaming' }
 ClaudeClient >> openStreamingSocket: aClaudeMessageRequest [
-	"Open a streaming connection. Uses real TLS socket for HTTPS (incremental SSE) or falls back to buffered ZnClient for HTTP (test/mock servers). Both return objects compatible with ClaudeSSEDecoder (atEnd/nextLine)."
+	"Open a streaming connection. Uses real TLS socket for HTTPS (incremental SSE) or falls back to buffered ZnClient for HTTP (test/mock servers). Both return objects compatible with ClaudeSSEDecoder (atEnd/nextLine). Raw use reports no outcome span; streamMessage:do: does."
+	^ self openStreamingSocket: aClaudeMessageRequest for: (ClaudeRequestObservation operation: #other)
+]
+
+{ #category : 'private' }
+ClaudeClient >> openStreamingSocket: aClaudeMessageRequest for: anObservation [
+	"Open the stream with retries counted on anObservation: real TLS socket for HTTPS (incremental SSE), buffered ZnClient for HTTP (test/mock servers)."
 	aClaudeMessageRequest stream: true.
 	(baseUrl beginsWith: 'https://')
-		ifTrue: [ ^ self openTLSStreamingSocket: aClaudeMessageRequest ]
-		ifFalse: [ ^ self openBufferedStreamingSocket: aClaudeMessageRequest ]
+		ifTrue: [ ^ self openTLSStreamingSocket: aClaudeMessageRequest ].
+	^ self openBufferedStreamingSocket: aClaudeMessageRequest for: anObservation
 ]
 
 { #category : 'private' }
@@ -1140,6 +1104,46 @@ ClaudeClient >> rateLimiter: aClaudeRateLimiter [
 	rateLimiter := aClaudeRateLimiter
 ]
 
+{ #category : 'private' }
+ClaudeClient >> retry: aBlock for: anObservation [
+	"Execute aBlock (which does HTTP + checkResponse:). Acquire a rate limit permit
+	 before each attempt when a rate limiter is set. Retry on retryable errors,
+	 reporting each scheduled retry and any final exhaustion to anObservation as
+	 typed PuntLog signals. Network errors from ZnClient are narrowed:
+	   - ConnectionTimedOut -> ClaudeTimeoutError(408), retryable (matches streaming path).
+	   - Other NetworkError subclasses (ConnectionRefused, SocketClosed, TLS failures)
+	     -> ClaudeNetworkError(599), non-retryable, propagates to caller. See stasdk-i7uc."
+
+	| attempt delay |
+	attempt := 0.
+	[
+		rateLimiter ifNotNil: [ :rl | rl acquire ].
+		[[[ ^ aBlock value ]
+			on: ConnectionTimedOut
+			do: [ :timeoutError |
+				(ClaudeTimeoutError new
+					statusCode: 408;
+					message: timeoutError messageText;
+					yourself) signal ] ]
+			on: NetworkError
+			do: [ :netError |
+				(ClaudeNetworkError new
+					statusCode: 599;
+					message: netError class name , ': ' , netError messageText;
+					yourself) signal ] ]
+			on: ClaudeApiError
+			do: [ :error |
+				error isRetryable ifFalse: [ error signal ].
+				attempt := attempt + 1.
+				attempt > maxRetries ifTrue: [
+					anObservation exhausted: error.
+					error signal ].
+				delay := self backoffDelay: attempt retryAfter: error retryAfter.
+				anObservation retry: attempt of: maxRetries error: error delayMs: delay millisecondDelayDuration.
+				delay wait ]
+	] repeat
+]
+
 { #category : 'API' }
 ClaudeClient >> sendMessage: aClaudeMessageRequest [
   "Send a non-streaming message. Returns ClaudeMessage. The returned
@@ -1148,7 +1152,7 @@ ClaudeClient >> sendMessage: aClaudeMessageRequest [
    when present (mission yvyt+pch2). msg requestId still works
    transparently --- storage delegates to responseMetadata."
   | response |
-  response := self executeWithRetry: [
+  response := self execute: #messages withRetry: [
     | http json resp msg metadata |
     http := self newHttpClientFor: aClaudeMessageRequest.
     json := STONJSON toString: aClaudeMessageRequest asJson.
@@ -1211,18 +1215,15 @@ ClaudeClient >> skillNameFromFrontmatterAt: aSkillMdReference [
 	^ nil
 ]
 
-{ #category : 'streaming' }
-ClaudeClient >> streamMessage: aClaudeMessageRequest do: aBlock [
-	"Send a streaming message. Calls aBlock with each event dict. Returns the
-	 accumulated ClaudeMessage. Uses incremental TLS streaming for HTTPS,
-	 buffered for HTTP. Network errors during SSE decoding are narrowed the
-	 same way as executeWithRetry: — ConnectionTimedOut becomes
-	 ClaudeTimeoutError(408), other NetworkError subclasses become
+{ #category : 'private' }
+ClaudeClient >> streamEvents: aClaudeMessageRequest for: anObservation do: aBlock [
+	"Open the stream (retries counted on anObservation) and feed each decoded event to aBlock. Network errors during
+	 SSE decoding are narrowed the same way as retry:for: — ConnectionTimedOut
+	 becomes ClaudeTimeoutError(408), other NetworkError subclasses become
 	 ClaudeNetworkError(599). See stasdk-i7uc."
 
 	| sock decoder message |
-	aClaudeMessageRequest stream: true.
-	sock := self openStreamingSocket: aClaudeMessageRequest.
+	sock := self openStreamingSocket: aClaudeMessageRequest for: anObservation.
 	message := ClaudeMessage new.
 	decoder := ClaudeSSEDecoder onStream: sock.
 	[[[ [ decoder hasNext ] whileTrue: [
@@ -1242,10 +1243,21 @@ ClaudeClient >> streamMessage: aClaudeMessageRequest do: aBlock [
 ]
 
 { #category : 'streaming' }
+ClaudeClient >> streamMessage: aClaudeMessageRequest do: aBlock [
+	"Send a streaming message. Calls aBlock with each event dict. Returns the
+	 accumulated ClaudeMessage. Uses incremental TLS streaming for HTTPS,
+	 buffered for HTTP. The whole stream, decoding and buffered retries included,
+	 is reported as one #stream operation (see observe:during:)."
+
+	^ self observe: #stream during: [ :observation |
+		self streamEvents: aClaudeMessageRequest for: observation do: aBlock ]
+]
+
+{ #category : 'streaming' }
 ClaudeClient >> streamRawBody: aClaudeMessageRequest [
 	"Send a streaming request, return the raw SSE response body as a String.
 	 Uses newHttpClientFor: so that anthropic-beta headers are propagated."
-	^ self executeWithRetry: [
+	^ self execute: #stream withRetry: [
 		| http requestJson response |
 		aClaudeMessageRequest stream: true.
 		http := self newHttpClientFor: aClaudeMessageRequest.
@@ -1317,7 +1329,7 @@ ClaudeClient >> uploadDirectory: aDirectoryReference displayTitle: aDisplayTitle
     aDisplayTitleOrNil ifNotNil: [
         entity addValuePart: 'display_title' value: aDisplayTitleOrNil ].
     self buildStreamingSkillPartsInto: entity fromDirectory: aDirectoryReference.
-    ^ self executeWithRetry: [
+    ^ self execute: #skills withRetry: [
         | http resp |
         http := self newSkillHttpClient.
         http
@@ -1341,7 +1353,7 @@ ClaudeClient >> uploadFile: aFileReference filename: aFilename mimeType: aMimeTy
     "Upload a file with explicit filename and MIME type. Returns ClaudeFileMetadata.
     Uses ClaudeStreamingMultiPartEntity so the file streams from disk in 64 KB
     chunks rather than being read entirely into memory (see mission sylk)."
-    ^ self executeWithRetry: [
+    ^ self execute: #files withRetry: [
         | http entity resp |
         http := self newFileHttpClient.
         entity := ClaudeStreamingMultiPartEntity new.
@@ -1366,7 +1378,7 @@ ClaudeClient >> uploadVersionFor: aSkillId fromDirectory: aDirectoryReference [
     | entity |
     entity := ClaudeStreamingMultiPartEntity new.
     self buildStreamingSkillPartsInto: entity fromDirectory: aDirectoryReference.
-    ^ self executeWithRetry: [
+    ^ self execute: #skills withRetry: [
         | http resp |
         http := self newSkillHttpClient.
         http

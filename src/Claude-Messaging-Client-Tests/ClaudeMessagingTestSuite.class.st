@@ -1,5 +1,5 @@
 "
-Suite factory for the Claude Messaging SDK — the API client layer. Aggregates the 10 `Claude-Messaging-*-Tests` packages: Types, Errors, Streaming, Client, Files, MCP, Skills, Tools, Examples, Batches. Has no dependency on any Agent-layer test package.
+Suite factory for the Claude Messaging SDK — the API client layer. Aggregates the 11 `Claude-Messaging-*-Tests` packages: Types, Errors, Streaming, Client, Files, MCP, Skills, Tools, Examples, Batches, Observability. Has no dependency on any Agent-layer test package.
 
 Use this factory when you only need the Messaging SDK tests. For the combined cross-product suite, see `ClaudeTestSuite`.
 
@@ -30,7 +30,7 @@ ClaudeMessagingTestSuite class >> lastErrorReports [
 
 { #category : 'accessing' }
 ClaudeMessagingTestSuite class >> packageNames [
-	"Answer the 10 Messaging SDK test package names."
+	"Answer the 11 Messaging SDK test package names."
 	^ #(
 		'Claude-Messaging-Types-Tests'
 		'Claude-Messaging-Errors-Tests'
@@ -42,6 +42,7 @@ ClaudeMessagingTestSuite class >> packageNames [
 		'Claude-Messaging-Tools-Tests'
 		'Claude-Messaging-Examples-Tests'
 		'Claude-Messaging-Batches-Tests'
+		'Claude-Messaging-Observability-Tests'
 	)
 ]
 

@@ -35,14 +35,20 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 
 # Tonel packages — auto-discovered from src/ directories containing package.st.
 # Dependency priority (lower number loads first): PharoKeyring=10, Types=20,
-# Errors/Streaming=30, Files/MCP/Skills=39, Client=40, Tools=42, Examples=43,
+# Errors/Streaming=30, Observability=35, Files/MCP/Skills=39, Client=40, Tools=42, Examples=43,
 # *-Tests=100.
 # Client loads before Tools (Client=40, Tools=42) — Tools adds extension methods
 # to ClaudeMessageRequest; the host class must exist before extensions compile.
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
-LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
+LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Observability' put: 35. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
-.PHONY: setup start stop save rebuild filein eval test test-fast test-full test-gates ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
+# punt-observe-pharo (PuntLog, PuntTelemetry) and its pinned upstreams, loaded
+# from the local clones scripts/fetch-observe makes. Must precede the Tonel
+# load: Claude-Messaging-Observability subclasses PuntLog and PuntTelemetry classes.
+UPSTREAM_DIR := $(CURDIR)/.tmp/upstream
+LOAD_OBSERVE_EXPR := | local | local := [ :name | 'gitlocal://$(UPSTREAM_DIR)/', name, '/src' ]. Metacello new baseline: 'SQLite3'; repository: (local value: 'sqlite'); load: 'Core'. Metacello new baseline: 'GRPC'; repository: (local value: 'grpc'); load. Metacello new baseline: 'PharoBackwardCompatibility'; repository: (local value: 'compat'); load. Metacello new baseline: 'OpenTelemetry'; repository: (local value: 'otel'); onConflictUseLoaded; load: \#('traces' 'metrics'). Metacello new baseline: 'PuntObserve'; repository: 'tonel://$(UPSTREAM_DIR)/punt-observe/src'; onConflictUseLoaded; load. 'PuntObserve loaded'
+
+.PHONY: setup start stop save rebuild filein eval smoke smoke-image test test-fast test-full test-gates ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -74,6 +80,9 @@ setup: $(IMAGE)
 	@echo ">> Loading Postern (eval server) via Metacello..."
 	$(VM) --headless $(IMAGE) eval --save "Metacello new baseline: 'Postern'; repository: 'github://punt-labs/postern:main/src'; load"
 	@echo "  ok Postern loaded"
+	@echo ">> Loading punt-observe-pharo (PuntLog, PuntTelemetry)..."
+	scripts/fetch-observe
+	$(VM) --headless $(IMAGE) eval --save "$(LOAD_OBSERVE_EXPR)"
 	@echo ">> Loading Tonel packages into image..."
 	$(VM) --headless $(IMAGE) eval --save "$(LOAD_PACKAGES_EXPR)"
 	@echo "  ok All packages loaded and image saved"
@@ -163,6 +172,25 @@ filein:
 eval:
 	@if [ -t 0 ]; then echo "Type Smalltalk, Ctrl-D to send:"; fi
 	@$(CURL) -d @- || echo "Error: is the server running? (make start)"
+
+# Installed-path observability smoke: fresh Pharo 12 image from this
+# checkout, isolated HOME, reads the real ~/.punt-labs/anthropic-sdk-pharo
+# log and telemetry files. SMOKE_IMAGE_DIR reuses an image built by
+# `make smoke-image SMOKE_IMG_DIR=...`.
+smoke:
+	@scripts/smoke
+
+# Fresh Pharo 12 image with the pinned PuntObserve dependencies and the SDK
+# loaded through BaselineOfClaudeSDK (no Postern, no dev-image state).
+SMOKE_IMG_DIR ?= $(CURDIR)/.tmp/smoke-image
+smoke-image:
+	@rm -rf "$(SMOKE_IMG_DIR)"
+	@mkdir -p "$(SMOKE_IMG_DIR)"
+	@cd "$(SMOKE_IMG_DIR)" && curl -fsSL https://get.pharo.org/64/$(PHARO_VERSION)+vm | bash >/dev/null
+	@scripts/fetch-observe
+	@"$(SMOKE_IMG_DIR)/pharo" --headless "$(SMOKE_IMG_DIR)/Pharo.image" eval --save "$(LOAD_OBSERVE_EXPR)"
+	@"$(SMOKE_IMG_DIR)/pharo" --headless "$(SMOKE_IMG_DIR)/Pharo.image" eval --save \
+		"Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; onConflictUseLoaded; load. 'ClaudeSDK loaded'"
 
 test:
 	@echo ">> Running Messaging SDK tests..."
@@ -456,10 +484,12 @@ check-baseline: $(VM)
 		&& mv Pharo*.image Pharo.image \
 		&& mv Pharo*.changes Pharo.changes \
 		&& rm -f image.zip
+	@scripts/fetch-observe
+	@$(VM) --headless $(BASELINE_IMG) eval --save "$(LOAD_OBSERVE_EXPR)"
 	@$(VM) --headless $(BASELINE_IMG) eval \
 		"(Smalltalk globals includesKey: #ClaudeClient) \
 			ifTrue: [ Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ClaudeClient present before load (not a cold image)'; lf; flush. Smalltalk exitFailure ]. \
-		[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; load ] \
+		[ Metacello new baseline: 'ClaudeSDK'; repository: 'tonel://$(SRC_DIR)'; onConflictUseLoaded; load ] \
 			on: Error \
 			do: [ :e | Stdio stdout nextPutAll: 'BASELINE-CHECK FAIL: ', e messageText; lf; flush. Smalltalk exitFailure ]. \
 		(Smalltalk globals includesKey: #ClaudeClient) \

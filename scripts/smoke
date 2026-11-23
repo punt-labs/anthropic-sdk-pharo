@@ -1,0 +1,21 @@
+#!/bin/sh
+# Installed-path observability smoke: build a fresh Pharo 12 image from this
+# checkout (or reuse SMOKE_IMAGE_DIR, built by `make smoke-image`),
+# then run scripts/smoke.py against isolated HOME directories.
+set -eu
+umask 077
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+command -v python3 >/dev/null || { echo 'Missing smoke dependency: python3' >&2; exit 1; }
+mkdir -p "$root/.tmp"
+run=$(mktemp -d "$root/.tmp/smoke-XXXXXXXX")
+printf 'Smoke artifacts: %s\n' "$run"
+image_dir=${SMOKE_IMAGE_DIR:-}
+if [ -z "$image_dir" ]; then
+    image_dir="$run/installed"
+    mkdir -p "$image_dir"
+    if ! make -C "$root" smoke-image SMOKE_IMG_DIR="$image_dir" >"$run/setup.log" 2>&1; then
+        tail -60 "$run/setup.log" >&2
+        exit 1
+    fi
+fi
+exec python3 "$root/scripts/smoke.py" "$run" "$image_dir"

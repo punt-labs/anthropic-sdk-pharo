@@ -15,6 +15,11 @@ Class {
 	#package : 'Claude-Messaging-Errors'
 }
 
+{ #category : 'telemetry' }
+ClaudeInvalidRequestError >> claudeTelemetryErrorKind [
+	^ #invalidRequest
+]
+
 { #category : 'testing' }
 ClaudeInvalidRequestError >> isRetryable [
 	"A 400 invalid-request is normally a permanent client error and is

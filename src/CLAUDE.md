@@ -36,6 +36,7 @@ and their purpose; the root file owns the detail.
 | `Claude-Messaging-Types` | Domain hierarchy: messages, content blocks, tools, models, request/response types, container, citations, cache control, thinking, beta-header catalog |
 | `Claude-Messaging-Errors` | `ClaudeApiError` hierarchy keyed on HTTP status |
 | `Claude-Messaging-Streaming` | SSE decoder + raw streaming socket |
+| `Claude-Messaging-Observability` | Typed PuntLog diagnostics and PuntTelemetry spans for API requests; `ClaudeObservability` owns the lifecycle |
 | `Claude-Messaging-Client` | `ClaudeClient` — Messages API, models API, token counting, files, MCP, skills, retry |
 | `Claude-Messaging-Tools` | Server-side tool definitions (Anthropic-side execution) |
 | `Claude-Messaging-Files` | Files API — upload, download, list, delete |

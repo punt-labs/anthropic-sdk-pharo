@@ -1,0 +1,21 @@
+#!/bin/sh
+# Clone punt-observe-pharo and the upstreams its baseline pins into
+# .tmp/upstream, so `make setup` and `make check-baseline` load them from
+# local full-history clones. Metacello's github:// fetch of the GRPC
+# dependency can stall; the revisions below match BaselineOfPuntObserve.
+set -eu
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+mkdir -p "$root/.tmp/upstream"
+clone() {
+    name=$1 url=$2 ref=$3
+    directory="$root/.tmp/upstream/$name"
+    if [ ! -d "$directory/.git" ]; then git clone --quiet "$url" "$directory"; fi
+    git -C "$directory" cat-file -e "$ref^{commit}" 2>/dev/null || git -C "$directory" fetch --quiet origin "$ref"
+    git -C "$directory" checkout --quiet --detach "$ref"
+}
+clone punt-observe https://github.com/punt-labs/punt-observe-pharo.git 92f6217a4b5e74d55543343e950de488f64977dd
+clone sqlite https://github.com/pharo-rdbms/Pharo-SQLite3.git 44dee155676f9ac9be1c7ffac8caef90024968c4
+clone otel https://github.com/Gabriel-Darbord/opentelemetry-pharo.git 2f5f61c093216309eef43e48211477cceaf0cff7
+clone grpc https://github.com/Gabriel-Darbord/grpc-pharo.git c32efa513b5d553de8f7a398044b3b6b84c4ced1
+clone compat https://github.com/jecisc/PharoBackwardCompatibility.git 395f76feb41c9e618ff6eba84204274c9050713d
+echo "  ok punt-observe-pharo and pinned upstreams in .tmp/upstream"

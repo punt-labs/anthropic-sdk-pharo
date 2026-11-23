@@ -59,7 +59,7 @@ ManifestClaudeMessagingClient class >> ruleRePackageManifestShouldBePackagedInMa
 
 { #category : 'code-critics' }
 ManifestClaudeMessagingClient class >> ruleSentNotImplementedRuleV1FalsePositive [
-	"ClaudeClient>>executeWithRetry: sends `rl acquire` to its rateLimiter slot.
+	"ClaudeClient>>retry:for: sends `rl acquire` to its rateLimiter slot.
 	 The ClaudeRateLimiter class lives in the upstream Claude-Agent-Exchange
 	 package (claude-agent-sdk-smalltalk repo) and is not loaded by the
 	 Messaging SDK alone. The slot is intentionally pluggable so the Agent
@@ -68,6 +68,6 @@ ManifestClaudeMessagingClient class >> ruleSentNotImplementedRuleV1FalsePositive
 	 positive until the rate-limiter abstraction migrates into the
 	 Messaging SDK proper (tracked separately)."
 	^ #(
-		#(#(#RGMethodDefinition #(#ClaudeClient #executeWithRetry: #false)) #'2026-04-30T00:00:00+00:00')
+		#(#(#RGMethodDefinition #(#ClaudeClient #retry:for: #false)) #'2026-11-23T00:00:00+00:00')
 	)
 ]

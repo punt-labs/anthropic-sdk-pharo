@@ -24,6 +24,11 @@ Class {
 	#package : 'Claude-Messaging-Errors'
 }
 
+{ #category : 'telemetry' }
+ClaudeNetworkError >> claudeTelemetryErrorKind [
+	^ #network
+]
+
 { #category : 'testing' }
 ClaudeNetworkError >> isRetryable [
 	"Network connect errors (refused, closed, TLS handshake) are not transient.

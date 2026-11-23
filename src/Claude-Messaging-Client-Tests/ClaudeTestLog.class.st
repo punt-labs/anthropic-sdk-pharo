@@ -5,7 +5,9 @@ Tests call ""ClaudeTestLog log: '...'"" instead of touching Transcript
 directly. Each call emits a ClaudeTestSignal, so whichever SignalLoggers
 are running during the test run receive it: TranscriptLogger writes it
 live, ClaudeFileSignalLogger appends it to a durable file, MemoryLogger
-records it for assertions.
+records it for assertions. ClaudeTestSignal is a PuntLogDebugSignal, so
+while PuntLog runs at DEBUG (ClaudeObservability startRole:telemetry: or a
+host tool) each line also lands, escaped and redacted, in the shared log.
 
 	(MemoryLogger new runDuring: [ ClaudeTestLog log: '>> hello' ])
 		recordings anyOne message

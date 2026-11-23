@@ -5,7 +5,7 @@ ClaudeClient >> cancelBatch: aBatchId [
 	"Cancel an in-progress batch. Returns ClaudeBatch with processingStatus = 'canceling'.
 	 Only succeeds while the batch is still in_progress; canceling an ended batch yields
 	 a 400 from the server."
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http resp |
 		http := self newBatchHttpClient.
 		http url: baseUrl, '/v1/messages/batches/', aBatchId, '/cancel'.
@@ -24,7 +24,7 @@ ClaudeClient >> createBatch: aClaudeBatchCreateParams [
 			statusCode: 400;
 			message: 'Cannot create a batch with zero requests';
 			yourself) signal ].
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http body resp |
 		http := self newBatchHttpClient.
 		body := STONJSON toString: aClaudeBatchCreateParams asJson.
@@ -41,7 +41,7 @@ ClaudeClient >> deleteBatch: aBatchId [
 	"Delete a batch. Returns ClaudeDeletedBatch. Only valid once processingStatus = 'ended'
 	 — the API returns 400 (ClaudeInvalidRequestError) for in-progress or canceling batches.
 	 Cancel first, wait for ended, then delete."
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http resp |
 		http := self newBatchHttpClient.
 		http url: baseUrl, '/v1/messages/batches/', aBatchId.
@@ -54,7 +54,7 @@ ClaudeClient >> deleteBatch: aBatchId [
 ClaudeClient >> getBatch: aBatchId [
 	"Fetch a batch by id. Returns ClaudeBatch. Idempotent — safe to call repeatedly
 	 for polling until isEnded."
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http resp |
 		http := self newBatchHttpClient.
 		http url: baseUrl, '/v1/messages/batches/', aBatchId.
@@ -73,7 +73,7 @@ ClaudeClient >> listBatches [
 ClaudeClient >> listBatches: aClaudeBatchListParamsOrNil [
 	"List batches with optional pagination params. Returns ClaudeBatchPage. Iterate
 	 by feeding page lastId into the next call's afterId until hasMore = false."
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http url resp |
 		http := self newBatchHttpClient.
 		url := baseUrl, '/v1/messages/batches'.
@@ -140,7 +140,7 @@ ClaudeClient >> streamBatchResults: aBatchId do: aBlock [
 	| batch |
 	batch := self getBatch: aBatchId.
 	batch resultsUrl ifNil: [ ClaudeBatchNotEndedError signal ].
-	^ self executeWithRetry: [
+	^ self execute: #batches withRetry: [
 		| http resp body parsed results |
 		http := self newBatchHttpClient.
 		http
