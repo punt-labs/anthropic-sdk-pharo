@@ -724,8 +724,8 @@ ClaudeClient >> execute: anOperation withRetry: aBlock [
 
 { #category : 'private' }
 ClaudeClient >> executeWithRetry: aBlock [
-	"Run aBlock under the retry policy without an outcome span. Used by paths
-	 nested inside an already observed operation (buffered streaming)."
+	"Run aBlock under the retry policy without an outcome span, for callers
+	 with no observed operation around them."
 	^ self retry: aBlock for: (ClaudeRequestObservation operation: #other)
 ]
 
@@ -989,9 +989,9 @@ ClaudeClient >> observe: anOperation during: aBlock [
 ]
 
 { #category : 'private' }
-ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest [
-	"Buffered streaming via ZnClient. Reads full response then returns a ReadStream. Used for HTTP mock servers in tests."
-	^ self executeWithRetry: [
+ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest for: anObservation [
+	"Buffered streaming via ZnClient. Reads full response then returns a ReadStream; retries count on anObservation. Used for HTTP mock servers in tests."
+	^ self retry: [
 		| http paramsJson contents |
 		http := self newHttpClientFor: aClaudeMessageRequest.
 		http timeout: streamingTimeout.
@@ -1003,16 +1003,22 @@ ClaudeClient >> openBufferedStreamingSocket: aClaudeMessageRequest [
 			post.
 		self checkResponse: http response.
 		contents := http response entity contents asString.
-		contents readStream ]
+		contents readStream ] for: anObservation
 ]
 
 { #category : 'streaming' }
 ClaudeClient >> openStreamingSocket: aClaudeMessageRequest [
-	"Open a streaming connection. Uses real TLS socket for HTTPS (incremental SSE) or falls back to buffered ZnClient for HTTP (test/mock servers). Both return objects compatible with ClaudeSSEDecoder (atEnd/nextLine)."
+	"Open a streaming connection. Uses real TLS socket for HTTPS (incremental SSE) or falls back to buffered ZnClient for HTTP (test/mock servers). Both return objects compatible with ClaudeSSEDecoder (atEnd/nextLine). Raw use reports no outcome span; streamMessage:do: does."
+	^ self openStreamingSocket: aClaudeMessageRequest for: (ClaudeRequestObservation operation: #other)
+]
+
+{ #category : 'private' }
+ClaudeClient >> openStreamingSocket: aClaudeMessageRequest for: anObservation [
+	"Open the stream with retries counted on anObservation: real TLS socket for HTTPS (incremental SSE), buffered ZnClient for HTTP (test/mock servers)."
 	aClaudeMessageRequest stream: true.
 	(baseUrl beginsWith: 'https://')
-		ifTrue: [ ^ self openTLSStreamingSocket: aClaudeMessageRequest ]
-		ifFalse: [ ^ self openBufferedStreamingSocket: aClaudeMessageRequest ]
+		ifTrue: [ ^ self openTLSStreamingSocket: aClaudeMessageRequest ].
+	^ self openBufferedStreamingSocket: aClaudeMessageRequest for: anObservation
 ]
 
 { #category : 'private' }
@@ -1210,15 +1216,14 @@ ClaudeClient >> skillNameFromFrontmatterAt: aSkillMdReference [
 ]
 
 { #category : 'private' }
-ClaudeClient >> streamEvents: aClaudeMessageRequest do: aBlock [
-	"Open the stream and feed each decoded event to aBlock. Network errors during
+ClaudeClient >> streamEvents: aClaudeMessageRequest for: anObservation do: aBlock [
+	"Open the stream (retries counted on anObservation) and feed each decoded event to aBlock. Network errors during
 	 SSE decoding are narrowed the same way as retry:for: — ConnectionTimedOut
 	 becomes ClaudeTimeoutError(408), other NetworkError subclasses become
 	 ClaudeNetworkError(599). See stasdk-i7uc."
 
 	| sock decoder message |
-	aClaudeMessageRequest stream: true.
-	sock := self openStreamingSocket: aClaudeMessageRequest.
+	sock := self openStreamingSocket: aClaudeMessageRequest for: anObservation.
 	message := ClaudeMessage new.
 	decoder := ClaudeSSEDecoder onStream: sock.
 	[[[ [ decoder hasNext ] whileTrue: [
@@ -1241,11 +1246,11 @@ ClaudeClient >> streamEvents: aClaudeMessageRequest do: aBlock [
 ClaudeClient >> streamMessage: aClaudeMessageRequest do: aBlock [
 	"Send a streaming message. Calls aBlock with each event dict. Returns the
 	 accumulated ClaudeMessage. Uses incremental TLS streaming for HTTPS,
-	 buffered for HTTP. The whole stream, decoding included, is reported as one
-	 #stream operation (see observe:during:)."
+	 buffered for HTTP. The whole stream, decoding and buffered retries included,
+	 is reported as one #stream operation (see observe:during:)."
 
 	^ self observe: #stream during: [ :observation |
-		self streamEvents: aClaudeMessageRequest do: aBlock ]
+		self streamEvents: aClaudeMessageRequest for: observation do: aBlock ]
 ]
 
 { #category : 'streaming' }

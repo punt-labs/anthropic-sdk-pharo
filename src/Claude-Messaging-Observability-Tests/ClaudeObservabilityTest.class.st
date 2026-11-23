@@ -1,5 +1,8 @@
 "
 Proves the SDK diagnostics and telemetry adoption against ClaudeMockServer: typed retry, exhaustion and outcome signals without content, a typed span in a sandboxed telemetry store, the disabled switch opening no store, and the PuntLog source gate over every production package. No live API.
+
+	(ClaudeObservabilityTest run: #testSchemasAreValid) hasPassed
+	>>> true
 "
 Class {
 	#name : 'ClaudeObservabilityTest',
@@ -61,7 +64,9 @@ ClaudeObservabilityTest >> startTelemetry: aConfig [
 	| telemetry |
 	telemetry := PuntHome duringHome: home do: [
 		PuntTelemetry startTool: ClaudeObservability tool config: aConfig schemas: ClaudeObservability schemas ].
-	aConfig disabled ifFalse: [ self waitUntil: [ telemetry worker pipeline notNil ] ].
+	(aConfig disabled not and: [ telemetry isEnabled not ])
+		ifTrue: [ self skip: 'telemetry off switch set in the environment' ].
+	telemetry isEnabled ifTrue: [ self waitUntil: [ telemetry worker pipeline notNil ] ].
 	^ telemetry
 ]
 
@@ -150,6 +155,18 @@ ClaudeObservabilityTest >> testSourceGate [
 			violationsInPackages: packages , #('PharoKeyring')
 			allowing: #(#ClaudeObservability))
 		equals: OrderedCollection new
+]
+
+{ #category : 'tests' }
+ClaudeObservabilityTest >> testStreamRetriesCountTowardStreamOutcome [
+	| outcome |
+	mockServer respondTo: '/v1/messages' withSequence: {
+		mockServer errorResponse: 529 message: 'PRIVATE-ERROR-BODY'.
+		ZnResponse ok: (ZnEntity text: ClaudeClientStreamingTest new sseResponseBody) }.
+	outcome := (self apiSignalsDuring: [ client streamMessage: self newRequest do: [ :event | event ] ])
+		detect: [ :each | each isKindOf: ClaudeApiOutcomeSignal ].
+	self assert: outcome operation equals: #stream.
+	self assert: outcome retries equals: 1
 ]
 
 { #category : 'tests' }

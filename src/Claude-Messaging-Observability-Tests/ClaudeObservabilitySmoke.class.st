@@ -1,5 +1,8 @@
 "
 Installed-path smoke entry run by scripts/smoke in a fresh image with an isolated HOME: starts ClaudeObservability at DEBUG, drives ClaudeClient against ClaudeMockServer through a retried success, an auth failure and exhausted retries with fixture secrets in every body, optionally writes rotation filler, stops, and writes a JSON report. Object subclass: a one-shot script with no domain superclass.
+
+	(ClaudeObservabilitySmoke new environment: 'ANTHROPIC_SDK_PHARO_SMOKE_UNSET' default: 'fallback')
+	>>> 'fallback'
 "
 Class {
 	#name : 'ClaudeObservabilitySmoke',
