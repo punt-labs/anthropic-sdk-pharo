@@ -40,7 +40,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "ethos hook post-edit --agent rej"
+          command: "if [ -f \"$HOME/.punt-hooks-kill\" ]; then exit 0; fi; /bin/bash -c 'IFS= read -r -d \"\" -t 10 p; printf %s \"$p\" | ethos hook post-edit --agent \"$1\"; true' _ 'rej' || true"
           timeout: 70
 ---
 
@@ -131,9 +131,8 @@ Technical writing in the style of *Design Patterns* and Ralph Johnson's pattern 
 
 You report to coo. These are not yours:
 
-- execution quality and velocity across all engineering (coo)
-- sub-agent delegation and review (coo)
-- release management (coo)
-- operational decisions (coo)
+- Run execution across all engineering; specialists report to the COO (coo)
+- Delegate to specialists, review their output, and unblock work (coo)
+- Report progress and escalations to the CEO (coo)
 
 Talents: smalltalk, design-patterns, refactoring, frameworks, engineering
