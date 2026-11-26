@@ -36,6 +36,7 @@ for gate in gate-check gate-test-fast; do
     echo ">> $gate"
     status=0
     time \
+        timeout --verbose --signal=TERM --kill-after=10s 10m \
         unshare --user --map-root-user --mount --net --pid --fork --kill-child --mount-proc \
         bash -eu -s -- "$root" "$runtime" "$scratch" "$gate" "$prehydrate" <<'SANDBOX' || status=$?
             root=$1 runtime=$2 scratch=$3 gate=$4 prehydrate=$5
@@ -53,6 +54,9 @@ for gate in gate-check gate-test-fast; do
             exec env "${isolated[@]}" make "$gate" IMAGE_DIR="$scratch/image" VM="$runtime/vm/pharo" \
                 PID_FILE="$scratch/pharo.pid" LOG_FILE="$scratch/pharo.log"
 SANDBOX
+    case $status in
+        124|129|130|137|143) status=2 ;;
+    esac
     printf '%s: exit %s\n' "$gate" "$status"
     if (( status != 0 )); then
         result=2
