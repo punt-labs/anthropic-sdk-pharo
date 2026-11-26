@@ -60,6 +60,10 @@ SANDBOX
     printf '%s: exit %s\n' "$gate" "$status"
     if (( status != 0 )); then
         result=2
+        if [[ -f $scratch/pharo.log ]]; then
+            printf '>> %s Pharo log\n' "$gate" >&2
+            cat -- "$scratch/pharo.log" >&2 || echo "FAIL: could not read $gate Pharo log" >&2
+        fi
     fi
 done
 exit "$result"
