@@ -49,7 +49,7 @@ LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)
 UPSTREAM_DIR := $(CURDIR)/.tmp/upstream
 LOAD_OBSERVE_EXPR := | local | local := [ :name | 'gitlocal://$(UPSTREAM_DIR)/', name, '/src' ]. Metacello new baseline: 'SQLite3'; repository: (local value: 'sqlite'); load: 'Core'. Metacello new baseline: 'GRPC'; repository: (local value: 'grpc'); load. Metacello new baseline: 'PharoBackwardCompatibility'; repository: (local value: 'compat'); load. Metacello new baseline: 'OpenTelemetry'; repository: (local value: 'otel'); onConflictUseLoaded; load: \#('traces' 'metrics'). Metacello new baseline: 'PuntObserve'; repository: 'tonel://$(UPSTREAM_DIR)/punt-observe/src'; onConflictUseLoaded; load. 'PuntObserve loaded'
 
-.PHONY: setup start stop save rebuild filein eval smoke smoke-image test test-fast test-full test-gates ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval smoke smoke-image test test-fast test-full test-gates test-handoff-snapshot ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -224,6 +224,9 @@ test-fast:
 test-gates:
 	@echo ">> Checking test target exit codes (no image needed)..."
 	@scripts/test-make-gates.sh
+
+test-handoff-snapshot:
+	@bash scripts/test-handoff-snapshot.sh "$(HANDOFF_RUNTIME_ARCHIVE)"
 
 test-full:
 	@echo ">> Running all Messaging SDK tests (including integration)..."
