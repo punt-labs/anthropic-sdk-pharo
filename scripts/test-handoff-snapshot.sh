@@ -15,7 +15,22 @@ if [[ ! $sha =~ ^[a-f0-9]{64}$ || ${actual%% *} != "$sha" ]]; then
 fi
 
 work=$(mktemp -d /tmp/pharo-handoff.XXXXXX)
-trap 'rm -rf -- "$work"' EXIT
+gate_pid=
+# shellcheck disable=SC2329
+cleanup() {
+    trap '' HUP INT TERM
+    local pid=${gate_pid:-$(jobs -pr)}
+    if [[ -n $pid ]]; then
+        kill -TERM "$pid" 2>/dev/null || true
+        wait "$pid" || true
+    fi
+    rm -rf -- "$work"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 runtime=$work/runtime
 mkdir -p "$runtime" "$root/.tmp"
 tar -xzf "$1" -C "$runtime"
@@ -35,10 +50,9 @@ for gate in gate-check gate-test-fast; do
     cp -a "$runtime/image" "$scratch/image"
     echo ">> $gate"
     status=0
-    time \
-        timeout --verbose --signal=TERM --kill-after=10s 10m \
+    timeout --verbose --signal=TERM --kill-after=10s 10m \
         unshare --user --map-root-user --mount --net --pid --fork --kill-child --mount-proc \
-        bash -eu -s -- "$root" "$runtime" "$scratch" "$gate" "$prehydrate" <<'SANDBOX' || status=$?
+        bash -eu -s -- "$root" "$runtime" "$scratch" "$gate" "$prehydrate" <<'SANDBOX' &
             root=$1 runtime=$2 scratch=$3 gate=$4 prehydrate=$5
             mount --bind "$root" "$root"
             mount -o remount,bind,ro "$root"
@@ -54,6 +68,9 @@ for gate in gate-check gate-test-fast; do
             exec env "${isolated[@]}" make "$gate" IMAGE_DIR="$scratch/image" VM="$runtime/vm/pharo" \
                 PID_FILE="$scratch/pharo.pid" LOG_FILE="$scratch/pharo.log"
 SANDBOX
+    gate_pid=$!
+    time wait "$gate_pid" || status=$?
+    gate_pid=
     case $status in
         124|129|130|137|143) status=2 ;;
     esac
