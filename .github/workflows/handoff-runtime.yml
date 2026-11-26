@@ -1,0 +1,32 @@
+name: Pharo handoff runtime
+
+on:
+  push:
+    tags: ['handoff-runtime-v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Build release assets
+        run: |
+          mkdir runtime-assets
+          bash scripts/build-handoff-runtime.sh runtime-assets
+      - name: Publish tagged runtime
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --prerelease --latest=false \
+            --title "Pharo handoff runtime $GITHUB_REF_NAME" \
+            --notes "Offline Pharo 12 VM and dependency image for the Ethos handoff gate." \
+            runtime-assets/pharo-handoff-linux-amd64.tar.gz \
+            runtime-assets/pharo-handoff-linux-amd64.tar.gz.sha256
