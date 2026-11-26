@@ -81,7 +81,7 @@ setup: $(IMAGE)
 	scripts/fetch-observe --with-postern
 	$(VM) --headless $(IMAGE) eval --save "$(LOAD_OBSERVE_EXPR)"
 	@echo ">> Loading Postern (eval server) via Metacello..."
-	$(VM) --headless $(IMAGE) eval --save "Metacello new baseline: 'Postern'; repository: 'gitlocal://$(UPSTREAM_DIR)/postern/src'; onConflictUseLoaded; load"
+	$(VM) --headless $(IMAGE) eval --save "| repository | repository := 'gitlocal://$(UPSTREAM_DIR)/postern/src'. (MetacelloProjectRegistration registrationForClassNamed: 'BaselineOfPostern' ifAbsent: [ nil ]) ifNotNil: [ :registration | registration unregisterProject ]. Metacello new baseline: 'Postern'; repository: repository; get. Metacello new baseline: 'Postern'; repository: repository; onConflictUseLoaded; load"
 	@echo "  ok Postern loaded"
 	@echo ">> Loading Tonel packages into image..."
 	$(VM) --headless $(IMAGE) eval --save "$(LOAD_PACKAGES_EXPR)"
