@@ -204,6 +204,10 @@ that do not exist in stateless build systems.
   can delete packages that exist on disk but not in the loaded image.
   Always sync with `make filein` before committing from a long-running
   image.
+- **SQLite3 load conflict after a failed setup.** If Metacello reports a
+  conflict between the GitHub and local SQLite3 baselines, run
+  `make rebuild` instead of retrying `make setup`. Rebuilding discards the
+  saved image and reloads the pinned dependency graph from scratch.
 
 ## Correction of Errors (COE)
 
