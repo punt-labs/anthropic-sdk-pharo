@@ -18,4 +18,7 @@ clone sqlite https://github.com/pharo-rdbms/Pharo-SQLite3.git 44dee155676f9ac9be
 clone otel https://github.com/Gabriel-Darbord/opentelemetry-pharo.git 2f5f61c093216309eef43e48211477cceaf0cff7
 clone grpc https://github.com/Gabriel-Darbord/grpc-pharo.git c32efa513b5d553de8f7a398044b3b6b84c4ced1
 clone compat https://github.com/jecisc/PharoBackwardCompatibility.git 395f76feb41c9e618ff6eba84204274c9050713d
+if [ "${1:-}" = --with-postern ]; then
+    clone postern https://github.com/punt-labs/postern.git 38e42c3e0fe2064b79a7da2a5ed516abf7d8633e
+fi
 echo "  ok punt-observe-pharo and pinned upstreams in .tmp/upstream"

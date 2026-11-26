@@ -77,12 +77,12 @@ $(IMAGE): $(VM)
 	@echo "  ok Fresh image ready"
 
 setup: $(IMAGE)
-	@echo ">> Loading Postern (eval server) via Metacello..."
-	$(VM) --headless $(IMAGE) eval --save "Metacello new baseline: 'Postern'; repository: 'github://punt-labs/postern:main/src'; load"
-	@echo "  ok Postern loaded"
 	@echo ">> Loading punt-observe-pharo (PuntLog, PuntTelemetry)..."
-	scripts/fetch-observe
+	scripts/fetch-observe --with-postern
 	$(VM) --headless $(IMAGE) eval --save "$(LOAD_OBSERVE_EXPR)"
+	@echo ">> Loading Postern (eval server) via Metacello..."
+	$(VM) --headless $(IMAGE) eval --save "| repository | repository := 'gitlocal://$(UPSTREAM_DIR)/postern/src'. (MetacelloProjectRegistration registrationForClassNamed: 'BaselineOfPostern' ifAbsent: [ nil ]) ifNotNil: [ :registration | registration unregisterProject ]. Metacello new baseline: 'Postern'; repository: repository; get. Metacello new baseline: 'Postern'; repository: repository; onConflictUseLoaded; load"
+	@echo "  ok Postern loaded"
 	@echo ">> Loading Tonel packages into image..."
 	$(VM) --headless $(IMAGE) eval --save "$(LOAD_PACKAGES_EXPR)"
 	@echo "  ok All packages loaded and image saved"
