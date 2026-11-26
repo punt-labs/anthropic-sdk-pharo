@@ -15,6 +15,7 @@ checks:
               IMAGE_DIR={scratch}/image VM={runtime}/vm/pharo
               PID_FILE={scratch}/pharo.pid LOG_FILE={scratch}/pharo.log
     system:
+      files: [/etc/hosts]
       tools: [bash, sh, env, dirname, uname, ldd, fgrep, expr, make, curl, cat, grep, sed, seq, sleep]
     scratch:
       checkout: [.tmp]
