@@ -1,0 +1,38 @@
+checks:
+  image-check: &pharo
+    profile: linux-worktree-v1
+    epoch: pharo-v1
+    sources:
+      mode: worktree
+    runtime:
+      platforms:
+        linux-amd64:
+          bundle: pharo-handoff-linux-amd64.tar.gz
+          sha256: 7033e624ff9544b35b3207333f0d2a9658b9ff78ce0fe3278d9e5122c93dbe9a
+          url: https://github.com/punt-labs/anthropic-sdk-pharo/releases/download/handoff-runtime-v1/pharo-handoff-linux-amd64.tar.gz
+          env:
+            MAKEFLAGS: >-
+              IMAGE_DIR={scratch}/image VM={runtime}/vm/pharo
+              PID_FILE={scratch}/pharo.pid LOG_FILE={scratch}/pharo.log
+    system:
+      tools: [bash, sh, env, dirname, uname, ldd, fgrep, expr, make, curl, cat, grep, sed, seq, sleep]
+    scratch:
+      checkout: [.tmp]
+      seed:
+        "{scratch}/image": "{runtime}/image"
+    git:
+      base_ref: refs/remotes/origin/main
+    network: loopback
+    prehydrate:
+      run:
+        - "{runtime}/vm/pharo"
+        - "{scratch}/image/Pharo.image"
+        - eval
+        - --save
+        - >-
+          | repo |
+          repo := IceRepositoryCreator new
+            location: (OSEnvironment current at: 'ETHOS_HANDOFF_ROOT') asFileReference;
+            createRepository.
+          repo name: (OSEnvironment current at: 'ETHOS_HANDOFF_CHECKOUT_NAME'); register.
+  fast-tests: *pharo

@@ -40,7 +40,8 @@ CURL := curl -s -X POST $(URL) -H "Content-Type: text/plain"
 # Client loads before Tools (Client=40, Tools=42) — Tools adds extension methods
 # to ClaudeMessageRequest; the host class must exist before extensions compile.
 # This matches the production claude-agent-sdk-smalltalk Makefile exactly.
-LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Observability' put: 35. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
+ICEBERG_REPO_NAME := (OSEnvironment current at: 'ETHOS_HANDOFF_CHECKOUT_NAME' ifAbsent: [ 'anthropic-sdk-pharo' ])
+LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)' asFileReference. IceRepository registry detect: [ :r | r name = $(ICEBERG_REPO_NAME) ] ifNone: [ | r | r := IceRepositoryCreator new location: '$(CURDIR)' asFileReference; createRepository. r register. r ]. allPkgs := (dir children select: [ :d | d isDirectory and: [ (d / 'package.st') exists ] ]) collect: [ :d | d basename ]. priority := Dictionary new. priority at: 'PharoKeyring' put: 10. priority at: 'Claude-Messaging-Types' put: 20. priority at: 'Claude-Messaging-Errors' put: 30. priority at: 'Claude-Messaging-Observability' put: 35. priority at: 'Claude-Messaging-Streaming' put: 30. priority at: 'Claude-Messaging-Files' put: 39. priority at: 'Claude-Messaging-MCP' put: 39. priority at: 'Claude-Messaging-Skills' put: 39. priority at: 'Claude-Messaging-Client' put: 40. priority at: 'Claude-Messaging-Tools' put: 42. priority at: 'Claude-Messaging-Examples' put: 43. sorted := allPkgs sorted: [ :a :b | | pa pb | pa := priority at: a ifAbsent: [ (a endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pb := priority at: b ifAbsent: [ (b endsWith: '-Tests') ifTrue: [ 100 ] ifFalse: [ 50 ] ]. pa = pb ifTrue: [ a < b ] ifFalse: [ pa < pb ] ]. sorted do: [ :name | | reader version | Transcript show: 'Loading package: ', name; cr. reader := TonelReader on: dir fileName: name. version := reader version. MCPackageLoader installSnapshot: version snapshot ]. lfCount := 0. Smalltalk globals allClasses do: [ :cls | ((cls package name beginsWith: 'Claude') or: [ cls package name beginsWith: 'PharoKeyring' ]) ifTrue: [ (cls methods, cls class methods) do: [ :m | | src | src := m sourceCode. (src includesSubstring: String lf) ifTrue: [ cls compile: (src copyReplaceAll: String lf with: String cr) classified: m protocolName. lfCount := lfCount + 1 ] ] ] ]. 'Loaded ', sorted size printString, ' packages, normalized ', lfCount printString, ' methods'
 
 # punt-observe-pharo (PuntLog, PuntTelemetry) and its pinned upstreams, loaded
 # from the local clones scripts/fetch-observe makes. Must precede the Tonel
@@ -48,7 +49,7 @@ LOAD_PACKAGES_EXPR := | dir allPkgs priority sorted lfCount | dir := '$(SRC_DIR)
 UPSTREAM_DIR := $(CURDIR)/.tmp/upstream
 LOAD_OBSERVE_EXPR := | local | local := [ :name | 'gitlocal://$(UPSTREAM_DIR)/', name, '/src' ]. Metacello new baseline: 'SQLite3'; repository: (local value: 'sqlite'); load: 'Core'. Metacello new baseline: 'GRPC'; repository: (local value: 'grpc'); load. Metacello new baseline: 'PharoBackwardCompatibility'; repository: (local value: 'compat'); load. Metacello new baseline: 'OpenTelemetry'; repository: (local value: 'otel'); onConflictUseLoaded; load: \#('traces' 'metrics'). Metacello new baseline: 'PuntObserve'; repository: 'tonel://$(UPSTREAM_DIR)/punt-observe/src'; onConflictUseLoaded; load. 'PuntObserve loaded'
 
-.PHONY: setup start stop save rebuild filein eval smoke smoke-image test test-fast test-full test-gates ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
+.PHONY: setup start stop save rebuild filein eval smoke smoke-image test test-fast test-full test-gates test-handoff-snapshot ensure-image gate-lint gate-check gate-test-fast status lint lint-md drift sync-ref check check-packages check-baseline transcript spec clean clean-image
 
 # ── Setup ──────────────────────────────────────────────
 
@@ -223,6 +224,9 @@ test-fast:
 test-gates:
 	@echo ">> Checking test target exit codes (no image needed)..."
 	@scripts/test-make-gates.sh
+
+test-handoff-snapshot:
+	@bash scripts/test-handoff-snapshot.sh "$(HANDOFF_RUNTIME_ARCHIVE)"
 
 test-full:
 	@echo ">> Running all Messaging SDK tests (including integration)..."
@@ -400,7 +404,7 @@ sync-ref:
 	@echo ">> Syncing Iceberg reference commit to HEAD..."
 	@RESULT=$$($(CURL) -d \
 		"| repo | \
-		repo := IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ nil ]. \
+		repo := IceRepository registry detect: [ :r | r name = $(ICEBERG_REPO_NAME) ] ifNone: [ nil ]. \
 		repo ifNil: [ 'ERROR: no repo registered' ] ifNotNil: [ \
 			repo workingCopy referenceCommit: repo head commit. \
 			'SYNCED detached=', repo workingCopy isDetached printString ]" \
@@ -422,7 +426,7 @@ sync-ref:
 check: check-packages lint sync-ref
 	@RESULT=$$($(CURL) -d \
 		"| repo diff | \
-		repo := IceRepository registry detect: [ :r | r name = 'anthropic-sdk-pharo' ] ifNone: [ nil ]. \
+		repo := IceRepository registry detect: [ :r | r name = $(ICEBERG_REPO_NAME) ] ifNone: [ nil ]. \
 		repo ifNil: [ 'ERROR: no repo registered' ] ifNotNil: [ \
 			diff := repo workingCopyDiff. \
 			diff isEmpty ifTrue: [ 'clean' ] ifFalse: [ 'DIRTY' ] ]" \
