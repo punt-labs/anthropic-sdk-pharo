@@ -59,6 +59,9 @@ for gate in gate-check gate-test-fast; do
             mount --bind "$scratch/checkout-tmp" "$root/.tmp"
             mount --bind "$runtime" "$runtime"
             mount -o remount,bind,ro "$runtime"
+            printf '%s\n' '127.0.0.1 localhost' '::1 localhost' > "$scratch/hosts"
+            mount --bind "$scratch/hosts" /etc/hosts
+            mount -o remount,bind,ro /etc/hosts
             ip link set lo up
             cd "$root"
             isolated=(-i PATH=/usr/bin:/bin TZ=UTC LANG=C HOME="$scratch/home" TMPDIR="$scratch/tmp"
