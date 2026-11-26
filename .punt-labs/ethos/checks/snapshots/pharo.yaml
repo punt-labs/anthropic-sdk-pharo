@@ -8,7 +8,8 @@ checks:
       platforms:
         linux-amd64:
           bundle: pharo-handoff-linux-amd64.tar.gz
-          sha256: 528b41bc275148ec6bd28365b424c80acafdf63ffdd77946cfaf30aab09ee06d
+          sha256: 7033e624ff9544b35b3207333f0d2a9658b9ff78ce0fe3278d9e5122c93dbe9a
+          url: https://github.com/punt-labs/anthropic-sdk-pharo/releases/download/handoff-runtime-v1/pharo-handoff-linux-amd64.tar.gz
           env:
             MAKEFLAGS: >-
               IMAGE_DIR={scratch}/image VM={runtime}/vm/pharo
